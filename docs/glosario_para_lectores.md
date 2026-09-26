@@ -1,221 +1,239 @@
-# GUÍA DE RESULTADOS DEL ESTUDIO PILOTO — EXPLICADA SIN JERGA
+# GUÍA DE RESULTADOS DEL ESTUDIO PILOTO
 
-Para: quien pidió el estudio (perfil no técnico en NLP).
-De: auditoría del material del piloto, 2026-09-23.
-Regla de esta guía: **todo número aquí está copiado de un archivo que existe** y se indica cuál.
-Nada de esta guía es una interpretación nueva: donde hay interpretación, va marcada como tal.
+![Guía de resultados del estudio piloto](assets/portada_guia_resultados_piloto.jpg)
 
----
+**Lectura accesible de los resultados, el diseño y los criterios de interpretación**
 
 ## 1. Resumen en una página
 
-**Qué se hizo.** 17 personas escribieron un texto sobre una escena (una persona sola en una habitación)
-en tres momentos:
+### Diseño del estudio
 
-| Momento | Qué recibían antes de escribir |
-| --- | --- |
-| **T1** | nada (escritura libre) |
-| **T2** | un estímulo |
-| **T3** | los tres estímulos (texto, audio e imagen) |
+El estudio piloto incluyó **17 participantes**, quienes produjeron un texto sobre una misma escena —una persona sola en una habitación— en tres momentos de escritura:
 
-Cada persona pertenecía a un grupo desde el principio: **Texto (6 personas), Audio (6), Imagen (5)**.
+| Momento | Estímulo previo a la escritura            |
+| ------- | ----------------------------------------- |
+| **T1**  | Sin estímulo; escritura libre             |
+| **T2**  | Un estímulo                               |
+| **T3**  | Los tres estímulos: texto, audio e imagen |
 
-**Qué se midió.** Principalmente **cuántas palabras** escribieron en cada momento
-(`n_palabras_calculado`). Se calcularon también otras cosas (variedad de vocabulario, parecido de
-significado entre los textos, temas), pero **para el piloto no quedaron resultados**: los archivos que
-las contenían están vacíos (ver §5).
+Desde el inicio, cada participante perteneció a una de tres condiciones:
 
-**Qué salió.**
+* **Texto:** 6 participantes
+* **Audio:** 6 participantes
+* **Imagen:** 5 participantes
 
-| Grupo | Palabras en T1 | Palabras en T3 | Cambio |
-| --- | --- | --- | --- |
-| Texto | 144 | 117 | **bajó 27** |
-| Audio | 134 | 217 | **subió 83** |
-| Imagen | 98 | 111 | subió 13 |
+Cada participante realizó las tres tareas de escritura, por lo que el conjunto piloto comprende **51 observaciones**.
 
-- Ni "el grupo" ni "el paso del tiempo" explican las diferencias por sí solos (p = 0,22 y p = 0,18:
-  no significativos).
-- Lo que sí aparece es la **combinación** de grupo y tiempo (p = 0,016): **el crecimiento se concentra en
-  el grupo Audio**.
-- Con la corrección por comparaciones múltiples (Holm), el único contraste que se mantiene es
-  **Audio de T1 a T3: −83 palabras, p = 0,0013**. Los demás quedan en "tendencia" o en nada.
+### Qué se midió
 
-**La frase que hay que decir y la que no.**
+La medida principal utilizada en este informe es el **número de palabras producido en cada texto**, identificado en el análisis como `n_palabras_calculado`.
 
-- ✅ "En el piloto, el aumento de palabras en el tiempo se concentra en el grupo Audio; el único cambio
-  que sobrevive la corrección estadística es el de Audio entre T1 y T3."
-- ❌ "Escuchar audio mejora la escritura." Con 6 personas en ese grupo y un solo contraste significativo
-  de nueve, eso no se puede afirmar.
-- ❌ "Se encontró un cambio en el vocabulario / en las emociones / en el significado." Del piloto **no
-  hay** resultados de eso.
+En el archivo de captura del piloto, la variable original de número de palabras no contiene valores utilizables. Por ello, el conteo se obtiene directamente del texto mediante un procedimiento computacional. Las demás medidas previstas por el pipeline —como diversidad léxica, similitud semántica y análisis temático— se mantienen fuera de este resumen porque el procesamiento disponible para la cohorte piloto no produjo resultados utilizables para esas variables.
 
----
+### Qué muestran los resultados
 
-## 2. Cómo leer las cuatro palabras que aparecen en los archivos
+Los valores descriptivos para T1 y T3 son:
 
-### "n_palabras_calculado"
+| Condición | Palabras en T1 | Palabras en T3 | Cambio T3 − T1 |
+| --------- | -------------: | -------------: | -------------: |
+| Texto     |            144 |            117 |        **−27** |
+| Audio     |            134 |            217 |        **+83** |
+| Imagen    |             98 |            111 |        **+13** |
 
-Es el conteo de palabras de un texto, contado por el programa (no por Excel). Se llama "calculado"
-justamente para distinguirlo de una columna de conteo que venía en el Excel y estaba **vacía** para el
-piloto. Cuando en esta guía leas "palabras", es este número.
+La diferencia general entre las condiciones no alcanza significación estadística (`p = 0,218`), y tampoco se observa un efecto general del tiempo (`p = 0,177`). En cambio, la interacción entre **condición y tiempo** sí resulta estadísticamente significativa (`p = 0,016`), lo que indica que la evolución de la producción escrita no siguió el mismo patrón en las tres condiciones.
 
-### "Embedding" (o "vector", 384 dimensiones)
+Los contrastes entre momentos, ajustados mediante **Holm**, muestran un único contraste que conserva significación estadística: **Audio, T1–T3**, con una diferencia estimada de `−83,2` cuando el contraste se expresa como **T1 − T3** (`p = 0,0013`). Expresado en la dirección temporal, esto corresponde a un **aumento aproximado de 83 palabras de T1 a T3** en la condición Audio.
 
-Un embedding es una **huella numérica del significado** de un texto: el programa convierte el texto en
-una lista de 384 números, de manera que **dos textos que significan cosas parecidas producen listas
-parecidas**. Es como darle a cada texto un código de barras que depende de lo que dice, no de cómo se ve.
-Analogía: dos canciones distintas del mismo género quedan "cerca" en un mapa de gustos; dos textos que
-hablan de lo mismo quedan cerca en el mapa de significados.
+### Cómo debe interpretarse este resultado
 
-- **Similitud (coseno):** número de 0 a 1 que dice qué tan cerca están dos textos. 1 = prácticamente lo
-  mismo; valores bajo 0,5 = textos que ya hablan de cosas distintas.
-- **Distancia euclidiana:** lo mismo que la similitud pero al revés: 0 = idénticos, números grandes =
-  textos que se alejaron.
+El resultado principal del piloto es, por tanto, que **el patrón de cambio en el número de palabras difiere entre las tres condiciones**, con un incremento particularmente marcado en la condición Audio entre T1 y T3.
 
-### "Prototipo semántico"
+Este hallazgo debe considerarse **exploratorio**. El grupo Audio está compuesto por seis participantes y el análisis involucra varias comparaciones, por lo que el resultado no permite concluir que la exposición a audio, por sí misma, mejore la escritura.
 
-Se tomaron 20 conceptos (soledad, espera, tristeza, esperanza, miedo…) y se escribieron **5 frases típicas
-de cada uno**. Con esas frases se construye un "imán" o punto de referencia por concepto. Después se mide
-qué tan cerca queda cada narrativa de cada imán. Es una forma de preguntar "¿de qué habla este texto?"
-usando números.
+Del mismo modo, este piloto no proporciona evidencia suficiente para afirmar cambios en la diversidad del vocabulario, las emociones, la organización temática o la similitud semántica, ya que esos análisis no produjeron resultados utilizables para esta cohorte.
 
-**Importante para el piloto:** este cálculo **no llegó a producir resultados** (los archivos quedaron
-vacíos, §5). Los resultados de prototipos que existen son del **conjunto combinado de 40 personas**, no
-del piloto. **Sin embargo se va a verificar que paso con este procedimiento y volver a correr para obtener resultados.**
+### Lectura recomendada del resultado
 
-### "Modelo mixto"
+Una formulación adecuada para describir el hallazgo es:
 
-Es la forma correcta de analizar este diseño: las mismas personas escriben tres veces, así que sus tres
-textos no son independientes entre sí. El modelo mixto separa **las diferencias entre personas** (cuánto
-escribe cada quien por carácter) de **lo que cambia con la condición y el tiempo** (lo experimental).
-De ahí salen dos números que verás en las tablas:
+> En la cohorte piloto, el cambio en la producción de palabras a lo largo de T1–T3 difirió entre las condiciones. El contraste que permaneció significativo después del ajuste de Holm correspondió a la condición Audio entre T1 y T3, donde se observó un aumento aproximado de 83 palabras.
 
-- **R² marginal** (0,21 en el piloto): cuánto de la variación explican la condición y el tiempo.
-- **R² condicional** (0,80 en el piloto): cuánto explican condición, tiempo **y** las diferencias entre
-  personas. Que sea 0,80 y el marginal 0,21 significa: **la mayor parte de la variación es "de quién
-  escribe", no del experimento.**
+Este resultado **no debe interpretarse como evidencia de que escuchar audio mejora la escritura**, sino como un patrón observado en una muestra piloto pequeña que requiere evaluación en análisis posteriores.
 
-### "p" y "corrección de Holm"
+## 2. Cómo leer los principales términos del análisis
 
-La p mide la probabilidad de ver una diferencia así si en realidad no hubiera ninguna. Por convención,
-p < 0,05 = "difícil de explicar por azar". Como se hacen **muchas comparaciones a la vez** (9 contrastes),
-la probabilidad de que alguna salga "significativa" por casualidad sube; la corrección de Holm sube el
-listón para compensarlo. Un contraste puede tener p = 0,002 sin corregir y 0,082 corregido: eso es
-"tendencia", no resultado.
+Esta sección explica, sin requerir conocimientos previos de NLP o estadística, los términos que aparecen con mayor frecuencia en los resultados del estudio.
+
+### `n_palabras_calculado`
+
+Es el número de palabras de cada texto, obtenido automáticamente a partir de su contenido. En el piloto, la columna original de conteo de palabras del archivo de captura no contiene valores utilizables, por lo que el análisis utiliza este conteo calculado.
+
+Cuando en este informe se habla de **número de palabras**, se hace referencia a `n_palabras_calculado`.
+
+### Embedding o vector de 384 dimensiones
+
+Un **embedding** es una representación numérica de un texto. En este estudio, cada texto se transforma en un vector de **384 valores numéricos** que resume determinados patrones semánticos aprendidos por el modelo.
+
+La idea fundamental es que textos con representaciones semánticas similares tienden a aparecer más próximos entre sí en este espacio numérico. El embedding no constituye una interpretación clínica ni una traducción directa del contenido: es una representación matemática utilizada para comparar textos.
+
+Dos medidas de distancia utilizadas para estas comparaciones son:
+
+* **Similitud de coseno:** indica qué tan próximas son dos representaciones en dirección. Valores más altos indican mayor similitud; un valor cercano a 1 representa una gran proximidad.
+* **Distancia euclidiana:** representa la separación entre dos puntos en el espacio numérico. Un valor de 0 indica que ambos vectores ocupan exactamente la misma posición.
+
+Estas medidas permiten comparar textos entre momentos o entre participantes sin depender exclusivamente del número de palabras que contienen.
+
+### Prototipo semántico
+
+Un **prototipo semántico** es un punto de referencia construido para representar un concepto determinado.
+
+En el procedimiento utilizado se definieron **20 conceptos** —por ejemplo, soledad, espera, tristeza, esperanza y miedo— y se utilizaron **cinco frases representativas por concepto**. A partir de esas frases se obtiene una representación numérica del concepto.
+
+Posteriormente, cada texto puede compararse con esos prototipos para estimar su proximidad semántica a cada concepto. En términos sencillos, el procedimiento permite preguntar:
+
+> **¿A qué conceptos se parece más el contenido de este texto?**
+
+Para la cohorte piloto, los archivos disponibles no contienen resultados utilizables de esta etapa. Los resultados de prototipos disponibles corresponden al análisis combinado de las cohortes y, por tanto, **no deben atribuirse directamente al piloto**. Este componente queda identificado como un análisis pendiente de verificación y eventual reprocesamiento específico de la cohorte piloto.
+
+### Modelo mixto
+
+El **modelo mixto** se utiliza porque cada participante produce tres textos. Estas tres observaciones de una misma persona están relacionadas entre sí y no deben tratarse como si provinieran de personas completamente independientes.
+
+El modelo permite distinguir entre:
+
+* diferencias sistemáticas entre participantes, y
+* cambios asociados con la condición experimental y el momento de medición.
+
+Una forma sencilla de entenderlo es que el modelo reconoce que algunas personas escriben habitualmente más que otras, independientemente de la condición experimental.
+
+En el piloto, el modelo presenta:
+
+* **R² marginal = 0,21:** proporción de variación explicada por los efectos fijos incluidos en el modelo, como condición y tiempo.
+* **R² condicional = 0,80:** proporción de variación explicada por el conjunto del modelo, incluyendo los efectos fijos y las diferencias asociadas con los participantes.
+
+La diferencia entre ambos valores indica que una parte importante de la variación observada en el número de palabras está asociada con **diferencias entre las personas**, además de los factores experimentales incluidos en el modelo.
+
+### `p` y corrección de Holm
+
+El valor **p** indica qué tan compatibles son los datos observados con la hipótesis estadística de referencia, que normalmente supone ausencia de un efecto o diferencia bajo el modelo utilizado.
+
+Un valor pequeño de `p` indica que los datos observados serían poco compatibles con esa hipótesis de referencia. El umbral convencional de `p < 0,05` se utiliza frecuentemente como criterio de significación estadística, aunque no constituye por sí mismo una medida de importancia práctica ni demuestra una relación causal.
+
+En este estudio se realizan varias comparaciones. Cuando se hacen muchas pruebas, aumenta la posibilidad de obtener algún resultado aparentemente significativo simplemente por el número de pruebas realizadas. La **corrección de Holm** ajusta los valores de p para controlar este problema en el conjunto de comparaciones.
+
+Por ello, en este informe debe distinguirse entre:
+
+* **p sin ajustar**, correspondiente a una prueba individual;
+* **p ajustada por Holm**, utilizada para interpretar el conjunto de contrastes múltiples.
+
+Cuando un resultado deja de alcanzar el umbral después del ajuste, se reporta como no significativo, aunque su valor sin ajustar pueda parecer pequeño.
 
 ---
 
 ## 3. Los resultados del piloto, uno por uno
 
-Archivo fuente: `03_resultados/tablas_piloto/` y `03_resultados/tablas_comparativas/`.
+Los resultados que se presentan a continuación corresponden a la cohorte piloto (`n = 17`, `51 observaciones`). Las tablas y modelos de referencia se encuentran en `results/piloto/` y los análisis que comparan ambas cohortes en `results/combinado/`.
 
-### 3.1 ¿Los grupos escribieron distinto? — No concluyente
+### 3.1 ¿Las tres condiciones presentan diferencias generales en el número de palabras?
 
-`condicion`: F(2;14) = 1,70 · **p = 0,218** · R² marginal 0,21.
-Los tres grupos escribieron entre 98 y 144 palabras de media en T1, pero con este número de personas la
-diferencia no se puede distinguir del azar.
+El efecto principal de la condición no alcanza significación estadística:
 
-### 3.2 ¿Se escribió más con el tiempo? — No concluyente en el piloto
+`condicion`: F(2,14) = 1,70 · **p = 0,218**.
 
-`tiempo`: F(2;28) = 1,84 · **p = 0,177**.
-Mirando la tabla del §1 parecería que sí (Audio sube 83 palabras), pero el efecto global no alcanza
-significancia: el crecimiento de Audio queda compensado por la bajada de Texto y el estancamiento de Imagen.
+Esto indica que, considerando conjuntamente los tres momentos de medición, los datos del piloto no muestran evidencia suficiente de una diferencia general en el número de palabras entre Texto, Audio e Imagen.
 
-### 3.3 ¿Importa a qué grupo perteneces para cómo creces en el tiempo? — Sí, y esto es lo central
+Las medias descriptivas no deben interpretarse por sí solas como evidencia de una diferencia entre condiciones, especialmente en una muestra pequeña.
 
-`condicion:tiempo`: F(4;28) = **3,64** · **p = 0,016**.
-Traducción: **el patrón de cambio a lo largo de T1→T2→T3 no es el mismo en los tres grupos.** Es la única
-señal del piloto que supera el umbral sin corrección, y se mantiene al corregir por haber comparado
-piloto y principal (`p ajustada = 0,00195` para `fuente:tiempo`).
+### 3.2 ¿El número de palabras cambia con el tiempo?
 
-### 3.4 ¿Cuál comparación concreta sostiene esa señal? — Solo una
+El efecto general del tiempo tampoco alcanza significación estadística:
 
-`piloto_n_palabras_calculado_contrastes_tiempo.csv` (p con corrección Holm):
+`tiempo`: F(2,28) = 1,84 · **p = 0,177**.
 
-| Comparación dentro del grupo | Diferencia (palabras) | p corregida |
-| --- | --- | --- |
-| **Audio: T1 → T3** | **−83,2** | **0,0013** ✅ |
-| Audio: T1 → T2 | −38,5 | 0,082 |
-| Audio: T2 → T3 | −44,7 | 0,082 |
-| Texto: T1 → T2 / T1 → T3 / T2 → T3 | +26,8 / +27,2 / +0,3 | 0,61 / 0,61 / 0,99 |
-| Imagen: los tres | −5,4 / −12,8 / −7,4 | 1,00 / 1,00 / 1,00 |
+Por tanto, el piloto no proporciona evidencia de un cambio uniforme en el número de palabras entre T1, T2 y T3, independientemente de la condición.
 
-**Lectura correcta:** de las nueve comparaciones hechas, una sobrevive. El grupo Audio es el único que
-muestra un crecimiento claro, y ese crecimiento ocurre de T1 a T3 (con los tres estímulos juntos), no de
-manera limpia paso a paso.
+Este resultado no contradice los cambios observados dentro de una condición concreta. Una condición puede mostrar una variación importante mientras el efecto promedio del tiempo, considerando conjuntamente las tres condiciones, permanece sin significación.
 
-### 3.5 ¿El piloto predice lo que pasará con el estudio grande? — No
+### 3.3 ¿El patrón de cambio depende de la condición?
 
-Este es el hallazgo más importante para no cometer un error de interpretación:
+Sí. La interacción entre condición y tiempo es estadísticamente significativa:
 
-| Efecto | Piloto (17 personas) | Estudio principal (23 personas) |
-| --- | --- | --- |
-| Grupo | p = 0,218 | p = 0,559 |
-| Tiempo | p = 0,177 | **p = 0,000000072** ✅ |
-| Grupo × Tiempo | **p = 0,016** ✅ | p = 0,989 |
+`condicion × tiempo`: F(4,28) = **3,64** · **p = 0,016**.
 
-En el **piloto** lo que llama la atención es la interacción (solo Audio crece).
-En el **principal** lo que llama la atención es el tiempo (todos crecen mucho) **y la interacción
-desaparece por completo** (p = 0,989).
+La interacción indica que **las tres condiciones no siguen el mismo patrón de cambio entre T1, T2 y T3**. En otras palabras, la evolución de la producción escrita depende de la condición en la que se encuentra el participante.
 
-Comparación formal de los dos conjuntos (`comparacion_n_palabras_calculado_ANOVA.csv`):
-el nivel general de palabras no difiere entre cohortes (**fuente**: p = 0,94), pero **la forma del cambio
-en el tiempo sí difiere** (**fuente × tiempo**: F = 6,85 · p = 0,002).
+Este es el resultado principal del modelo del piloto. No significa que una condición sea globalmente superior a otra, sino que las trayectorias observadas a lo largo del tiempo son diferentes.
 
-> Cómo decirlo sin exagerar: "el piloto y el estudio principal no cuentan la misma historia sobre el
-> papel de la condición; la diferencia entre ambos conjuntos es detectable estadísticamente, pero son
-> **muestras distintas de personas** (17 y 23, con 5 a 8 personas por celda), así que esto se reporta
-> como exploratorio, no como un hallazgo confirmatorio."
+### 3.4 ¿Dónde se localiza esa diferencia?
 
-### 3.6 Calidad del ajuste del modelo del piloto
+Para identificar qué cambios concretos contribuyen a la interacción, se examinan los contrastes entre momentos dentro de cada condición. Los valores de `p` se presentan con corrección de Holm.
 
-`03_resultados/diagnosticos/` contiene, para las 51 narrativas, el valor observado, el ajustado por el
-modelo y el residuo (la diferencia). `piloto_n_palabras_calculado_performance.txt` (71 KB) guarda la
-salida de rendimiento del ajuste. Traducción práctica: **el modelo funciona como descripción de estos 17
-casos, no como predicción de casos nuevos.**
+| Comparación        | Diferencia estimada | p corregida |
+| ------------------ | ------------------: | ----------: |
+| **Audio: T3 − T1** |  **+83,2 palabras** |  **0,0013** |
+| Audio: T2 − T1     |      +38,5 palabras |       0,082 |
+| Audio: T3 − T2     |      +44,7 palabras |       0,082 |
+| Texto: T2 − T1     |      −26,8 palabras |        0,61 |
+| Texto: T3 − T1     |      −27,2 palabras |        0,61 |
+| Texto: T3 − T2     |       −0,3 palabras |        0,99 |
+| Imagen: T2 − T1    |       +5,4 palabras |        1,00 |
+| Imagen: T3 − T1    |      +12,8 palabras |        1,00 |
+| Imagen: T3 − T2    |       +7,4 palabras |        1,00 |
 
----
+El único contraste que permanece significativo después del ajuste de Holm es **Audio entre T1 y T3**, con un incremento estimado de aproximadamente **83 palabras**.
 
-## 4. Estado de las bases de datos (para saber de dónde sale cada número)
+Es importante expresar la dirección del efecto de forma consistente: cuando el contraste se presenta como `T3 − T1`, el resultado es **+83,2**; algunas tablas del pipeline pueden presentar el mismo contraste en la dirección inversa (`T1 − T3`), en cuyo caso aparece como `−83,2`.
 
-| Base | Qué es | Filas |
-| --- | --- | --- |
-| `01_datos_crudos/Vaciado Datos piloto Interrelación.xlsx` | El vaciado original, tal como se transcribió (con celdas combinadas y encabezado en la fila 4). | 17 personas × 3 textos |
-| `01_datos_crudos/piloto_interrelacion_formato_largo.xlsx` | La misma información **ordenada**, con su propio diccionario de columnas. Es la base buena. | 51 |
-| `02_datos_procesados/datos/ancho_piloto_completo.csv` | Una fila por persona, con sus tres textos y sus tres conteos. | 17 |
-| `02_datos_procesados/datos/embeddings_piloto_t1..t3.rds` | Las huellas numéricas de los textos (384 números por texto). **Sí existen y sirven.** | 17 × 384 |
-| `02_datos_procesados/datos/piloto_longitudinal.csv` | Formato "largo": una fila por persona y momento. Es el que usan los modelos. | 51 |
+La evidencia del piloto, por tanto, corresponde a un cambio concentrado entre T1 y T3 en la condición Audio. No se observa un patrón estadísticamente significativo en los cambios intermedios T1–T2 o T2–T3, ni en los contrastes equivalentes de Texto e Imagen.
 
-Tres detalles que conviene saber, porque explican rarezas de los archivos:
+### 3.5 ¿El patrón del piloto se reproduce en la cohorte principal?
 
-1. **La columna "número de palabras" del Excel venía vacía** para el piloto (en el estudio principal sí
-   estaba llena). Por eso el análisis usa el conteo hecho por el programa.
-2. **Las 17 filas del piloto viajan etiquetadas como "principal_P1…principal_P17".** Los datos del piloto
-   son correctos, pero su etiqueta se confunde con la del estudio principal (que también tiene un P1…P17).
-   En la tabla combinada de 40 personas hay, por eso, **17 identificadores repetidos**. Antes de cruzar o
-   publicar esas bases hay que renombrar los del piloto (por ejemplo `piloto_P1`).
-3. **La hoja de demora está vacía en el piloto**: el piloto no tuvo esa manipulación, solo el principal.
-4. **Cuidado con las cifras de reparto que circulan de memoria:** la cabecera del programa de análisis
-   declara "Texto P1-P5, Audio P6-P11, Imagen P12-P17", y **eso no coincide con los datos**. El reparto
-   real, verificable en el formato largo, es **Texto 6 / Audio 6 / Imagen 5**. Si en algún documento
-   aparece "5/6/6", viene de la cabecera del programa, no de los datos.
+El piloto y la cohorte principal deben compararse como **muestras independientes**, no como dos mediciones de las mismas personas.
+
+| Efecto             | Piloto (`n = 17`) | Principal (`n = 23`) |
+| ------------------ | ----------------: | -------------------: |
+| Condición          |         p = 0,218 |            p = 0,559 |
+| Tiempo             |         p = 0,177 |  **p = 7,24 × 10⁻⁸** |
+| Condición × Tiempo |     **p = 0,016** |            p = 0,989 |
+
+Los patrones son diferentes. En el piloto, la evidencia principal se concentra en la **interacción entre condición y tiempo**. En la cohorte principal, en cambio, el efecto principal corresponde al **tiempo**, mientras que la interacción condición × tiempo no resulta significativa.
+
+La comparación formal entre cohortes también muestra que el nivel general de producción de palabras no difiere de manera apreciable entre ellas (`fuente`: **p = 0,94**), mientras que el patrón de cambio temporal sí difiere (`fuente × tiempo`: F = **6,85**, p = **0,002**).
+
+Estos resultados no deben interpretarse como una predicción del piloto sobre el estudio principal. Las cohortes están formadas por personas diferentes y tienen tamaños reducidos, por lo que la comparación se presenta como evidencia **exploratoria sobre la consistencia o discrepancia de los patrones observados**.
+
+### 3.6 ¿Qué indican los diagnósticos del modelo?
+
+Los archivos de diagnóstico del piloto contienen, para las **51 observaciones**, los valores observados, los valores estimados por el modelo y los residuos correspondientes.
+
+Estos materiales permiten evaluar cómo se comporta el modelo respecto de los datos utilizados para ajustarlo. En este contexto, su función principal es **descriptiva y diagnóstica**.
+
+El ajuste no debe interpretarse como evidencia de capacidad predictiva sobre participantes o textos nuevos. El piloto fue diseñado como una muestra exploratoria y, con **17 participantes**, no proporciona una base suficiente para presentar el modelo como un sistema de predicción generalizable.
 
 ---
 
-## 6. Mini glosario
+## 4. Estado de los datos y procedencia de los resultados
 
-| Término | Qué significa en una frase |
-| --- | --- |
-| Narrativa | El texto que escribió una persona en uno de los tres momentos. |
-| T1 / T2 / T3 | Los tres momentos de escritura (sin estímulo / un estímulo / tres estímulos). |
-| Condición | El grupo al que pertenecía la persona: Texto, Audio o Imagen. |
-| Outcome | Lo que se mide y se analiza; aquí, número de palabras. |
-| EMM | Media estimada por el modelo para una casilla (grupo × momento), corregida por quién escribe. |
-| Embedding | Lista de 384 números que representa el significado de un texto. |
-| Prototipo | Punto de referencia construido con 5 frases típicas de un concepto. |
-| PCA | Técnica para resumir muchas variables en dos ejes ("mapa comprimido") y ver si los grupos se separan. |
-| TTR | Variedad de vocabulario: palabras distintas divididas entre palabras totales. |
-| p corregida (Holm) | El valor de p después de subir el listón por haber hecho muchas comparaciones. |
-| Piloto | Las 17 personas del primer grupo de prueba. |
-| Principal | Las 23 personas del estudio completo. |
-| Combinado | Las 40 personas juntas (17 + 23), base de las tablas de "resultados" generales. |
+Los resultados del estudio piloto se derivan de una secuencia de archivos de origen, transformación y análisis. Cada etapa cumple una función distinta y permite rastrear el origen de las medidas utilizadas en los modelos.
+
+| Material                                             | Descripción                                                                                                                                                                                 |            Dimensión |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------: |
+| `data/raw/`                                          | Archivos de captura y materiales de entrada utilizados para la preparación del estudio. Los archivos con información individual no forman parte de la distribución pública del repositorio. |                    — |
+| `data/processed/piloto/`                             | Datos procesados de la cohorte piloto y artefactos derivados utilizados en las etapas analíticas.                                                                                           |                    — |
+| `data/processed/piloto/embeddings_piloto_t1..t3.rds` | Representaciones numéricas de los textos obtenidas para cada momento de medición. Cada texto está representado mediante un vector de 384 dimensiones.                                       | 17 × 384 por momento |
+| `results/piloto/`                                    | Informes, tablas y demás resultados específicos de la cohorte piloto.                                                                                                                       |                    — |
+| `results/combinado/`                                 | Materiales destinados a comparaciones entre la cohorte piloto y la cohorte principal.                                                                                                       |                    — |
+
+El conjunto piloto comprende **17 participantes y 51 observaciones**, correspondientes a tres momentos de escritura por participante.
+
+La variable `n_palabras_calculado` se obtiene directamente del contenido textual y constituye la medida principal utilizada en los resultados presentados en este informe.
+
+Los archivos de captura originales y los materiales que contienen texto individual se mantienen fuera de la distribución del repositorio. Los resultados publicados corresponden, en cambio, a productos agregados o derivados que permiten documentar el análisis sin reproducir el corpus individual.
+
+### Consideraciones sobre la procedencia
+
+La estructura de archivos permite distinguir entre:
+
+>**material de origen → datos procesados → modelos → tablas y figuras de resultados.**
+
+Esta separación facilita la trazabilidad de las cifras presentadas y evita confundir los archivos utilizados durante la preparación del estudio con los materiales destinados a documentar sus resultados.
