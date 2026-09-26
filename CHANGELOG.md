@@ -157,7 +157,7 @@ figuras estén donde dice el inventario.
 
 - **D4c - Sensitivity hardcoded path**: `R/09_sensitivity.R` now uses `file.path("outputs", "modelos", "comparativos", "modelos_comparativos.rds")` with `file.exists()` guard and clear message.
 
-- **D4d - Raw data path configurable**: Added `RUTA_DATOS_CRUDOS` (default `C:/Users/saraq/Downloads/Experimento Alfonso Lopez Corral`), `RUTA_PRINCIPAL_EXCEL`, `RUTA_PILOTO_EXCEL` to `R/00_config.R`. `run_analysis.R` uses these with fallback to `data/raw/`.
+- **D4d - Raw data path configurable**: Added configurable `RUTA_DATOS_CRUDOS`, `RUTA_PRINCIPAL_EXCEL`, `RUTA_PILOTO_EXCEL` to `R/00_config.R`. `run_analysis.R` uses these with fallback to `data/raw/`.
 
 - **D5 - Wrong dependent variable in pilot**: `R/piloto/03_piloto_models.R` now:
   - Uses `n_palabras_calculado` as default VD (since `n_palabras` is 100% empty in pilot)

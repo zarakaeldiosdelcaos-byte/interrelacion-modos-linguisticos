@@ -26,7 +26,7 @@
 4. **Datos crudos** (NO están en el repo; colocar en la ruta configurada):
    - `Datos Exp Interrelacion.xlsx` (hoja `Datos_Largo`) — estudio principal
    - `piloto_interrelacion_formato_largo.xlsx` (hoja `Datos_Largo`) — estudio piloto
-   - Por defecto se busca en: `C:/Users/saraq/Downloads/Experimento Alfonso Lopez Corral/`
+   - Por defecto se busca en: `data/raw/`
    - Para cambiar la ruta: editar `RUTA_DATOS_CRUDOS` en `R/00_config.R`
 
 ## Estructura de salidas
@@ -80,7 +80,7 @@ cd /d "G:\Mi unidad\GITHUB_REPOS\experimento-nlp"
 
 Los datos crudos **no están en el repositorio** (contienen narrativas de participantes). La ruta se
 configura en `RUTA_DATOS_CRUDOS` dentro de `R/00_config.R` (por defecto apunta a la carpeta local
-`C:/Users/saraq/Downloads/Experimento Alfonso Lopez Corral`).
+`la ruta local configurada en `RUTA_DATOS_CRUDOS``).
 
 ## Verificación rápida
 

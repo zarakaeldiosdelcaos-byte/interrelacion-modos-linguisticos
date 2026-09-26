@@ -59,7 +59,7 @@ Prueba ejecutada el 2026-09-24 con los Excel reales (extrayendo del propio v5 la
 ## Cómo ejecutarlo
 
 ```cmd
-cd /d "C:\Users\saraq\Downloads\Experimento Alfonso Lopez Corral\Script en R"
+cd /d "%RUTA_PROYECTO%"
 "C:\Program Files\R\R-4.6.1\bin\Rscript.exe" --vanilla "Experimento ALC_v5_corregido.R"
 ```
 

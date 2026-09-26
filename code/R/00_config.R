@@ -144,7 +144,7 @@ use_python(python_exe, required = TRUE)
 # ── Rutas de datos ───────────────────────────────────────────────────────────
 # Directorio base donde están los archivos Excel crudos (NO copiar al repo)
 # Ajustar según la máquina del usuario
-RUTA_DATOS_CRUDOS <- "C:/Users/saraq/Downloads/Experimento Alfonso Lopez Corral"
+RUTA_DATOS_CRUDOS <- Sys.getenv("RUTA_DATOS_CRUDOS", unset = file.path(getwd(), "data", "raw"))
 
 # Rutas completas a los archivos (se construyen aquí para uso en run_analysis.R)
 RUTA_PRINCIPAL_EXCEL <- file.path(RUTA_DATOS_CRUDOS, "Datos Exp Interrelacion.xlsx")

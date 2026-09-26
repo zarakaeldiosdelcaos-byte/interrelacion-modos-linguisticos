@@ -36,7 +36,7 @@
 # 'Analisis agosto'. Ahora la entrada es de solo lectura y la salida va a una
 # carpeta nueva, separada por cohorte.
 
-PROYECTO     <- "C:/Users/saraq/Downloads/Experimento Alfonso Lopez Corral"
+PROYECTO <- normalizePath(".", winslash = "/", mustWork = FALSE)
 RAIZ_ENTRADA <- file.path(PROYECTO, "Analisis agosto")
 RAIZ_SALIDA  <- file.path(PROYECTO, "Analisis agosto v2")
 
@@ -1104,9 +1104,9 @@ validar_datos <- function(datos) {
 # ======================
 
 # ── Rutas ──────────────────────────────────────────────────────────────────
-ruta_principal <- "C:/Users/saraq/Downloads/Experimento Alfonso Lopez Corral/Datos Exp Interrelacion.xlsx"
+ruta_principal <- file.path("data", "raw", "Datos Exp Interrelacion.xlsx")
 # IMPORTANTE: Usamos el archivo en formato largo, NO el ancho (Vaciado Datos piloto Interrelación.xlsx)
-ruta_piloto_largo <- "C:/Users/saraq/Downloads/Experimento Alfonso Lopez Corral/piloto_interrelacion_formato_largo.xlsx"
+ruta_piloto_largo <- file.path("data", "raw", "piloto_interrelacion_formato_largo.xlsx")
 
 # ── Importar y normalizar principal ──────────────────────────────────────────
 raw_principal <- importar_principal(ruta_principal, hoja = "Datos_Largo")

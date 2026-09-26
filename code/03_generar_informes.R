@@ -9,7 +9,7 @@
 #  - Si un artefacto no existe, se declara como ausente en lugar de inventarlo.
 # ============================================================================
 
-RAIZ <- "C:/Users/saraq/Downloads/Experimento Alfonso Lopez Corral/Analisis agosto v2"
+RAIZ <- normalizePath(".", winslash = "/", mustWork = FALSE)
 DIR_INF <- file.path(RAIZ, "informes")
 dir.create(DIR_INF, recursive = TRUE, showWarnings = FALSE)
 opciones_num <- options(digits = 4, scipen = 999)
