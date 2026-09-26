@@ -1,167 +1,474 @@
-#!/usr/bin/env bash
 # ============================================================================
-#  checks de integridad del repositorio  (cuatro comprobaciones, una pasada)
-#  uso:  bash tests/check_hashes.sh            → verifica manifests/SHA256_REPO.txt
-#        bash tests/check_hashes.sh ruta.txt   → verifica otro manifiesto
+# Verificación de integridad del repositorio
+#
+# Uso:
+#   bash tests/check_hashes.sh
+#   bash tests/check_hashes.sh ruta/al/manifiesto.txt
+#
+# El script comprueba:
+#   1. Presencia de posibles microdatos entre los archivos versionados.
+#   2. Ausencia de narrativas extensas en CSV/XLSX versionados.
+#   3. Correspondencia EXACTA entre el manifiesto y los archivos versionados.
+#   4. Integridad SHA-256 según la regla canónica del repositorio.
+#   5. Estructura de los CSV relevantes.
+#   6. Presencia de los artefactos mínimos del repositorio.
+#
+# La regla de hashing debe coincidir exactamente con:
+#   scripts/validation/generate_repo_manifest.py
+#
+# Regla de huella:
+#   - binarios -> SHA-256 de los bytes originales;
+#   - texto    -> SHA-256 con CRLF normalizado a LF.
 # ============================================================================
-set -u
-cd "$(dirname "$0")/.." || exit 1          # raíz del repositorio
+
+set -uo pipefail
+
+cd "$(git rev-parse --show-toplevel 2>/dev/null)" || {
+    echo "ERROR: no se pudo localizar la raíz del repositorio Git."
+    exit 1
+}
+
 MANIFEST="${1:-manifests/SHA256_REPO.txt}"
-fallos=0
+FALLOS=0
 
-PY=""
-for c in python3 python py; do command -v "$c" >/dev/null 2>&1 && { PY="$c"; break; }; done
+# ----------------------------------------------------------------------------
+# Dependencias obligatorias
+# ----------------------------------------------------------------------------
 
-echo "== 1. ¿hay microdatos rastreados por git? (debe salir vacío) =="
-if command -v git >/dev/null 2>&1 && git rev-parse --git-dir >/dev/null 2>&1; then
-  # nombres que delatan microdatos, y hojas de cálculo FUERA de results/ (dentro va la copia
-  # agregada en Excel, que sí es admisible y además se inspecciona en el check 1b)
-  sospechosos=$( { git ls-files | grep -Ei 'ancho_.*completo|_longitudinal\.csv|identificacion\.csv|scores_diccionarios|Vaciado|Datos Exp|datos_experimento|piloto_interrelacion|datos_completos_ancho|datos_formato_largo|\.RData' ; git ls-files | grep -Ei '\.(xlsx|xls)$' | grep -v '^results/' ; } || true)
-  if [ -n "$sospechosos" ]; then
-    echo "   ⚠ REVISAR: hay archivos que parecen microdatos:"
-    echo "$sospechosos" | sed 's/^/     /'
-    fallos=$((fallos+1))
-  else
-    echo "   OK: ningún microdato rastreado"
-  fi
-else
-  echo "   (sin repositorio git; se omite)"
+if ! command -v git >/dev/null 2>&1; then
+    echo "ERROR: Git no está disponible."
+    exit 1
 fi
+
+PYTHON=""
+for CANDIDATO in python3 python py; do
+    if command -v "$CANDIDATO" >/dev/null 2>&1; then
+        PYTHON="$CANDIDATO"
+        break
+    fi
+done
+
+if [ -z "$PYTHON" ]; then
+    echo "ERROR: Python es necesario para las comprobaciones de integridad."
+    exit 1
+fi
+
+# ----------------------------------------------------------------------------
+# 1. Archivos versionados potencialmente incompatibles con la política
+# ----------------------------------------------------------------------------
+
+echo "== 1. Control de archivos potencialmente sensibles =="
+
+SOSPECHOSOS="$(
+    {
+        git ls-files | grep -Ei \
+            'ancho_.*completo|_longitudinal\.csv|identificacion\.csv|scores_diccionarios|Vaciado|Datos Exp|datos_experimento|piloto_interrelacion|datos_completos_ancho|datos_formato_largo|\.RData' \
+            || true
+
+        git ls-files | grep -Ei '\.(xlsx|xls|xlsm)$' \
+            | grep -v '^results/' \
+            || true
+    } | sort -u
+)"
+
+if [ -n "$SOSPECHOSOS" ]; then
+    echo "   REVISAR: se detectaron archivos que podrían corresponder a microdatos:"
+    printf '%s\n' "$SOSPECHOSOS" | sed 's/^/     /'
+    FALLOS=$((FALLOS + 1))
+else
+    echo "   OK: no se detectaron archivos potencialmente sensibles."
+fi
+
+# ----------------------------------------------------------------------------
+# 2–5. Comprobaciones estructurales y numéricas en Python
+# ----------------------------------------------------------------------------
 
 echo
-echo "== 1b. ¿algún CSV o .xlsx rastreado trae narrativa (celdas de más de 200 caracteres)? =="
-if [ -n "$PY" ] && command -v git >/dev/null 2>&1 && git rev-parse --git-dir >/dev/null 2>&1; then
-  "$PY" - <<'PYEOF'
-import csv, re, zipfile, subprocess, sys
-rastreados = subprocess.run(["git", "ls-files"], capture_output=True, text=True).stdout.split()
-csvs  = [f for f in rastreados if f.lower().endswith((".csv", ".tsv"))]
-xlsxs = [f for f in rastreados if f.lower().endswith((".xlsx", ".xlsm"))]
-mal, n = [], 0
+echo "== 2–5. Integridad de contenido, manifiesto y CSV =="
 
-def largas_xlsx(f, umbral=200):
-    """Cuenta cadenas largas dentro de un .xlsx (sharedStrings y cadenas en línea)."""
+"$PYTHON" - "$MANIFEST" <<'PYEOF'
+from __future__ import annotations
+
+import csv
+import hashlib
+import os
+import subprocess
+import sys
+from pathlib import Path
+import zipfile
+import re
+
+
+MANIFEST = Path(sys.argv[1])
+
+BINARIAS = (
+    ".rds",
+    ".png",
+    ".pdf",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".xlsx",
+    ".xls",
+    ".zip",
+    ".gz",
+    ".rda",
+    ".rdata",
+)
+
+
+def git_files() -> list[str]:
+    """Obtiene exactamente las rutas versionadas por Git."""
+    result = subprocess.run(
+        ["git", "ls-files", "-z"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=True,
+    )
+    return [
+        os.fsdecode(p)
+        for p in result.stdout.split(b"\0")
+        if p
+    ]
+
+
+def hash_file(path: Path) -> str:
+    """Aplica la regla canónica de hash del proyecto."""
+    data = path.read_bytes()
+
+    if not path.name.lower().endswith(BINARIAS):
+        data = data.replace(b"\r\n", b"\n")
+
+    return hashlib.sha256(data).hexdigest()
+
+
+def scan_csv(path: Path, threshold: int = 200) -> tuple[bool, str | None]:
+    """Busca cadenas largas y errores de estructura CSV."""
     try:
-        z = zipfile.ZipFile(f)
-    except Exception:
-        return -1
-    c = 0
-    for parte in z.namelist():
-        if not parte.endswith(".xml"):
-            continue
-        xml = z.read(parte).decode("utf-8", "replace")
-        c += sum(1 for s in re.findall(r"<t[^>]*>(.*?)</t>", xml, re.S) if len(s) > umbral)
-    return c
+        with path.open(
+            newline="",
+            encoding="utf-8-sig",
+            errors="replace",
+        ) as fh:
+            reader = csv.reader(fh)
+            rows = list(reader)
+    except Exception as exc:
+        return False, f"no se pudo leer: {exc}"
 
-for f in csvs:
-    n += 1
-    try:
-        with open(f, newline="", encoding="utf-8-sig", errors="replace") as fh:
-            for row in csv.reader(fh):
-                if any(len(c) > 200 for c in row):
-                    mal.append(f); break
-    except Exception as e:
-        mal.append(f"{f} (no se pudo leer: {e})")
-
-for f in xlsxs:
-    n += 1
-    c = largas_xlsx(f)
-    if c != 0:
-        mal.append(f"{f} ({c} cadenas largas)")
-
-if mal:
-    print("   ⚠ REVISAR: archivos con contenido de más de 200 caracteres (posible narrativa):")
-    for f in mal: print("     ", f)
-else:
-    print(f"   OK: {n} archivos revisados ({len(csvs)} CSV, {len(xlsxs)} xlsx), ninguno con celdas largas")
-sys.exit(1 if mal else 0)
-PYEOF
-  [ $? -ne 0 ] && fallos=$((fallos+1))
-else
-  echo "   (sin git o sin python; se omite)"
-fi
-
-echo
-echo "== 2. ¿coinciden los artefactos con el manifiesto? ($MANIFEST) =="
-if [ -f "$MANIFEST" ] && [ -n "$PY" ]; then
-  "$PY" - "$MANIFEST" <<'PYEOF'
-import hashlib, re, sys, os
-BINARIAS = (".rds", ".png", ".pdf", ".jpg", ".jpeg", ".gif", ".xlsx", ".xls",
-            ".zip", ".gz", ".rda", ".rdata")
-man = sys.argv[1]
-fallos, n = [], 0
-for linea in open(man, encoding="utf-8", errors="replace"):
-    linea = linea.rstrip("\r\n")
-    if not linea.strip():
-        continue
-    m = re.match(r"^([0-9a-fA-F]{64})\s+\*?(.+)$", linea)
-    if not m:
-        fallos.append((linea[:70], "formato inesperado")); continue
-    h, ruta = m.group(1).lower(), m.group(2)
-    n += 1
-    if not os.path.isfile(ruta):
-        fallos.append((ruta, "no existe en el árbol")); continue
-    datos = open(ruta, "rb").read()
-    if not ruta.lower().endswith(BINARIAS):
-        datos = datos.replace(b"\r\n", b"\n")   # huella independiente del sistema
-    if hashlib.sha256(datos).hexdigest() != h:
-        fallos.append((ruta, "hash distinto"))
-if fallos:
-    print(f"   ⚠ DISCREPANCIAS ({len(fallos)} de {n}):")
-    for r, m in fallos[:20]:
-        print("     ", r, "→", m)
-    sys.exit(1)
-print(f"   OK: {n} archivos verificados, 0 discrepancias")
-PYEOF
-  [ $? -ne 0 ] && fallos=$((fallos+1))
-else
-  echo "   ⚠ no existe $MANIFEST o no hay python en el PATH"
-  fallos=$((fallos+1))
-fi
-
-echo "== 3. ¿todas las filas de los CSV tienen tantos campos como su encabezado? =="
-if [ -n "$PY" ]; then
-  "$PY" - <<'PYEOF'
-import csv, glob, sys
-mal = 0; n = 0
-for f in sorted(glob.glob("results/**/*.csv", recursive=True)) + sorted(glob.glob("data_spec/*.csv")):
-    n += 1
-    try:
-        with open(f, newline="", encoding="utf-8-sig") as fh:
-            rows = list(csv.reader(fh))
-    except Exception as e:
-        print("   ⚠ no se pudo leer", f, e); mal += 1; continue
     if not rows:
-        print("   ⚠ vacío:", f); mal += 1; continue
-    ancho = len(rows[0])
-    desc = [i for i, r in enumerate(rows[1:], 2) if len(r) != ancho]
-    if desc:
-        print("   ⚠ REVISAR", f, "filas con distinto nº de campos:", desc[:5]); mal += 1
-print(f"   {'OK' if mal == 0 else 'CON PROBLEMAS'}: {n} CSV revisados, {mal} con problemas")
-sys.exit(1 if mal else 0)
+        return False, "archivo vacío"
+
+    width = len(rows[0])
+
+    for row_number, row in enumerate(rows[1:], 2):
+        if len(row) != width:
+            return False, (
+                f"fila {row_number} con {len(row)} campos; "
+                f"encabezado con {width}"
+            )
+
+        if any(len(cell) > threshold for cell in row):
+            return False, (
+                f"fila {row_number} contiene una celda "
+                f"superior a {threshold} caracteres"
+            )
+
+    return True, None
+
+
+def scan_xlsx(path: Path, threshold: int = 200) -> tuple[bool, str | None]:
+    """
+    Inspección básica de XLSX/XLSM.
+
+    Se revisan los nodos de texto XML contenidos en el paquete OOXML.
+    Los archivos XLS binarios no se interpretan aquí y permanecen sujetos
+    a las reglas de clasificación y hashing.
+    """
+    try:
+        with zipfile.ZipFile(path) as z:
+            count = 0
+
+            for member in z.namelist():
+                if not member.endswith(".xml"):
+                    continue
+
+                text = z.read(member).decode("utf-8", "replace")
+
+                for value in re.findall(
+                    r"<t[^>]*>(.*?)</t>",
+                    text,
+                    flags=re.DOTALL,
+                ):
+                    if len(value) > threshold:
+                        count += 1
+
+            if count:
+                return False, f"{count} cadenas superiores a {threshold} caracteres"
+
+    except Exception as exc:
+        return False, f"no se pudo inspeccionar: {exc}"
+
+    return True, None
+
+
+# ============================================================================
+# Lista versionada
+# ============================================================================
+
+tracked = sorted(git_files())
+tracked_set = set(tracked)
+
+print(f"   Archivos versionados por Git: {len(tracked)}")
+
+
+# ============================================================================
+# 2. Contenido CSV / XLSX
+# ============================================================================
+
+csv_files = [
+    f for f in tracked
+    if f.lower().endswith((".csv", ".tsv"))
+]
+
+xlsx_files = [
+    f for f in tracked
+    if f.lower().endswith((".xlsx", ".xlsm"))
+]
+
+content_failures = []
+
+for filename in csv_files:
+    ok, reason = scan_csv(Path(filename))
+    if not ok:
+        content_failures.append((filename, reason))
+
+
+for filename in xlsx_files:
+    ok, reason = scan_xlsx(Path(filename))
+    if not ok:
+        content_failures.append((filename, reason))
+
+
+if content_failures:
+    print("   REVISAR: archivos con problemas de contenido:")
+    for filename, reason in content_failures:
+        print(f"     {filename} -> {reason}")
+    content_status = False
+else:
+    print(
+        f"   OK: {len(csv_files)} CSV/TSV y "
+        f"{len(xlsx_files)} XLSX/XLSM revisados."
+    )
+    content_status = True
+
+
+# ============================================================================
+# 3–4. Verificación del manifiesto
+# ============================================================================
+
+manifest_status = True
+
+if not MANIFEST.is_file():
+    print(f"   ERROR: no existe el manifiesto: {MANIFEST}")
+    manifest_status = False
+else:
+    entries: dict[str, str] = {}
+    malformed = []
+    duplicates = []
+
+    with MANIFEST.open(
+        encoding="utf-8",
+        errors="replace",
+    ) as fh:
+        for raw in fh:
+            line = raw.rstrip("\r\n")
+
+            if not line.strip():
+                continue
+
+            parts = line.split(None, 1)
+
+            if len(parts) != 2:
+                malformed.append(line)
+                continue
+
+            digest, path_text = parts
+
+            if path_text.startswith("*"):
+                path_text = path_text[1:]
+
+            if not re.fullmatch(r"[0-9a-fA-F]{64}", digest):
+                malformed.append(line)
+                continue
+
+            if path_text in entries:
+                duplicates.append(path_text)
+
+            entries[path_text] = digest.lower()
+
+    manifest_set = set(entries)
+
+    # ------------------------------------------------------------------------
+    # Completitud respecto de Git
+    # ------------------------------------------------------------------------
+
+    missing_from_manifest = sorted(
+        tracked_set - manifest_set - {str(MANIFEST)}
+    )
+
+    extra_in_manifest = sorted(
+        manifest_set - tracked_set
+    )
+
+    if malformed:
+        print(
+            f"   ERROR: {len(malformed)} líneas del manifiesto "
+            f"tienen formato inválido."
+        )
+        manifest_status = False
+
+    if duplicates:
+        print(
+            f"   ERROR: {len(duplicates)} rutas aparecen duplicadas "
+            f"en el manifiesto."
+        )
+        manifest_status = False
+
+    if missing_from_manifest:
+        print(
+            f"   ERROR: {len(missing_from_manifest)} archivos versionados "
+            f"no aparecen en el manifiesto:"
+        )
+        for filename in missing_from_manifest[:20]:
+            print(f"     - {filename}")
+        manifest_status = False
+
+    if extra_in_manifest:
+        print(
+            f"   ERROR: {len(extra_in_manifest)} rutas aparecen en el "
+            f"manifiesto pero no están versionadas:"
+        )
+        for filename in extra_in_manifest[:20]:
+            print(f"     - {filename}")
+        manifest_status = False
+
+    # ------------------------------------------------------------------------
+    # Integridad de cada entrada
+    # ------------------------------------------------------------------------
+
+    discrepancies = []
+
+    for filename, expected_hash in entries.items():
+        path = Path(filename)
+
+        if not path.is_file():
+            discrepancies.append((filename, "no existe en el árbol de trabajo"))
+            continue
+
+        observed_hash = hash_file(path)
+
+        if observed_hash != expected_hash:
+            discrepancies.append((filename, "hash distinto"))
+
+    if discrepancies:
+        print(
+            f"   ERROR: {len(discrepancies)} discrepancias "
+            f"de integridad."
+        )
+
+        for filename, reason in discrepancies[:20]:
+            print(f"     {filename} -> {reason}")
+
+        manifest_status = False
+    else:
+        print(
+            f"   OK: {len(entries)} entradas del manifiesto "
+            f"verificadas, sin discrepancias."
+        )
+
+
+# ============================================================================
+# Resultado Python
+# ============================================================================
+
+python_failures = 0
+
+if not content_status:
+    python_failures += 1
+
+if not manifest_status:
+    python_failures += 1
+
+sys.exit(python_failures)
 PYEOF
-  [ $? -ne 0 ] && fallos=$((fallos+1))
-else
-  echo "   (sin python en el PATH; se omite)"
-fi
+
+[ $? -ne 0 ] && FALLOS=$((FALLOS + 1))
+
+# ----------------------------------------------------------------------------
+# 6. Estructura mínima del repositorio
+# ----------------------------------------------------------------------------
 
 echo
-echo "== 4. ¿están los cuatro informes y las figuras donde dice el inventario? =="
-esperados="results/piloto/INFORME_PILOTO.md results/principal/INFORME_PRINCIPAL.md results/combinado/INFORME_COMBINADO.md results/combinado/BORRADOR_DISCUSION_Y_CONCLUSIONES.md docs/resultados_integrados.md manifests/INVENTARIO_RESULTADOS.csv results/piloto/manuscrito/resultados_piloto.pdf results/principal/manuscrito/resultados_principal.pdf results/combinado/manuscrito/resultados_combinado.pdf results/piloto/manuscrito/resultados_piloto.tex results/principal/manuscrito/resultados_principal.tex results/combinado/manuscrito/resultados_combinado.tex"
-faltan=""
-for f in $esperados; do [ -f "$f" ] || faltan="$faltan $f"; done
-n_fig=$(ls results/figuras/*.png 2>/dev/null | wc -l)
-if [ -n "$faltan" ]; then
-  echo "   ⚠ faltan:$faltan"; fallos=$((fallos+1))
+echo "== 6. Artefactos mínimos del repositorio =="
+
+esperados=(
+    "results/piloto/INFORME_PILOTO.md"
+    "results/principal/INFORME_PRINCIPAL.md"
+    "results/combinado/INFORME_COMBINADO.md"
+    "results/combinado/BORRADOR_DISCUSION_Y_CONCLUSIONES.md"
+    "docs/resultados_integrados.md"
+    "manifests/INVENTARIO_RESULTADOS.csv"
+    "results/piloto/manuscrito/resultados_piloto.pdf"
+    "results/principal/manuscrito/resultados_principal.pdf"
+    "results/combinado/manuscrito/resultados_combinado.pdf"
+    "results/piloto/manuscrito/resultados_piloto.tex"
+    "results/principal/manuscrito/resultados_principal.tex"
+    "results/combinado/manuscrito/resultados_combinado.tex"
+)
+
+faltan=()
+
+for archivo in "${esperados[@]}"; do
+    if [ ! -f "$archivo" ]; then
+        faltan+=("$archivo")
+    fi
+done
+
+if [ "${#faltan[@]}" -gt 0 ]; then
+    echo "   REVISAR: faltan ${#faltan[@]} artefactos requeridos:"
+    for archivo in "${faltan[@]}"; do
+        echo "     - $archivo"
+    done
+    FALLOS=$((FALLOS + 1))
 else
-  echo "   OK: los once documentos están presentes"
+    echo "   OK: los ${#esperados[@]} artefactos mínimos están presentes."
 fi
-echo "   figuras del pipeline en results/figuras/: $n_fig (esperadas 15)"
-[ "$n_fig" -ge 15 ] || { echo "   ⚠ faltan figuras"; fallos=$((fallos+1)); }
+
+FIGURAS=$(find results/figuras -maxdepth 1 -type f -name '*.png' 2>/dev/null | wc -l)
+
+echo "   Figuras PNG en results/figuras/: $FIGURAS"
+
+if [ "$FIGURAS" -lt 15 ]; then
+    echo "   REVISAR: se esperan al menos 15 figuras PNG."
+    FALLOS=$((FALLOS + 1))
+else
+    echo "   OK: número de figuras compatible con el pipeline."
+fi
+
+# ----------------------------------------------------------------------------
+# Resultado final
+# ----------------------------------------------------------------------------
 
 echo
-if [ "$fallos" -eq 0 ]; then
-  echo "== RESULTADO: todo OK =="
+if [ "$FALLOS" -eq 0 ]; then
+    echo "======================================================================"
+    echo "RESULTADO: PASS — integridad del repositorio verificada"
+    echo "======================================================================"
 else
-  echo "== RESULTADO: $fallos comprobación(es) con problemas =="
+    echo "======================================================================"
+    echo "RESULTADO: FAIL — $FALLOS comprobación(es) con problemas"
+    echo "======================================================================"
 fi
-exit "$fallos"
+
+exit "$FALLOS"
+```
