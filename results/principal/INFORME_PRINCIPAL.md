@@ -1,5 +1,7 @@
 # Informe de resultados — cohorte PRINCIPAL
 
+![Resultados de la cohorte principal](../../docs/assets/portada_resultados_principal.jpg)
+
 **Generado:** 2026-09-25 19:16  
 **Cohorte:** estudio principal (23 participantes)  
 **Datos de origen:** `Analisis agosto v2/` (corrida del script `Experimento ALC_v5_corregido.R`)  
@@ -32,7 +34,7 @@ Reparto por demora:
 | D | 11 |
 | ND | 12 |
 
-
+![Diseño y flujo de participantes](../../docs/assets/diseno_flujo_participantes.jpg)
 
 ## 2. Auditoría de variables: qué se pudo modelar y qué no
 
@@ -104,6 +106,9 @@ grados de libertad Satterthwaite. La condición es un factor **entre** sujetos y
 
 Se ajustaron modelos lineales mixtos (`valor ~ condición × tiempo + (1|participante)`, REML, Satterthwaite) para **1 variables** en la cohorte **principal**: `n_palabras_calculado`.
 
+![Modelo lineal mixto y resultados principales](../../docs/assets/modelo_mixto_principal.jpg)
+
+La estructura del modelo y la magnitud relativa de sus efectos se sintetizan visualmente en la figura siguiente. Esta representación permite distinguir el efecto temporal de la ausencia de efectos atribuibles a la condición o a su interacción con el tiempo, así como observar la proporción de variabilidad asociada a los efectos fijos y a las diferencias entre participantes.
 
 | fuente | variable | efecto | F | df1 | df2 | p | R2_marginal | R2_condicional |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -167,19 +172,25 @@ Contrastes **entre tiempos** en cada condición (ajuste Holm):
 
 ## 5. Figuras
 
-- `C:/Users/saraq/Downloads/Experimento Alfonso Lopez Corral/Analisis agosto v2/principal/graficas_es/PRINCIPAL_n_palabras_calculado_ES_distribucion.pdf`
-- `C:/Users/saraq/Downloads/Experimento Alfonso Lopez Corral/Analisis agosto v2/principal/graficas_es/PRINCIPAL_n_palabras_calculado_ES_distribucion.png`
-- `C:/Users/saraq/Downloads/Experimento Alfonso Lopez Corral/Analisis agosto v2/principal/graficas_es/PRINCIPAL_n_palabras_calculado_ES_individuales.pdf`
-- `C:/Users/saraq/Downloads/Experimento Alfonso Lopez Corral/Analisis agosto v2/principal/graficas_es/PRINCIPAL_n_palabras_calculado_ES_individuales.png`
-- `C:/Users/saraq/Downloads/Experimento Alfonso Lopez Corral/Analisis agosto v2/principal/graficas_es/PRINCIPAL_n_palabras_calculado_ES_trayectoria.pdf`
-- `C:/Users/saraq/Downloads/Experimento Alfonso Lopez Corral/Analisis agosto v2/principal/graficas_es/PRINCIPAL_n_palabras_calculado_ES_trayectoria.png`
+Las figuras correspondientes a los análisis de la cohorte principal fueron generadas mediante los scripts del pipeline ejecutados en **R/RStudio** y se encuentran disponibles en formatos PNG y PDF de alta resolución. Las versiones en español e inglés se conservan para facilitar tanto la revisión técnica como la preparación de manuscritos y presentaciones.
 
-- `C:/Users/saraq/Downloads/Experimento Alfonso Lopez Corral/Analisis agosto v2/principal/figures_en/MAIN_n_palabras_calculado_EN_distribucion.pdf`
-- `C:/Users/saraq/Downloads/Experimento Alfonso Lopez Corral/Analisis agosto v2/principal/figures_en/MAIN_n_palabras_calculado_EN_distribucion.png`
-- `C:/Users/saraq/Downloads/Experimento Alfonso Lopez Corral/Analisis agosto v2/principal/figures_en/MAIN_n_palabras_calculado_EN_individuales.pdf`
-- `C:/Users/saraq/Downloads/Experimento Alfonso Lopez Corral/Analisis agosto v2/principal/figures_en/MAIN_n_palabras_calculado_EN_individuales.png`
-- `C:/Users/saraq/Downloads/Experimento Alfonso Lopez Corral/Analisis agosto v2/principal/figures_en/MAIN_n_palabras_calculado_EN_trayectoria.pdf`
-- `C:/Users/saraq/Downloads/Experimento Alfonso Lopez Corral/Analisis agosto v2/principal/figures_en/MAIN_n_palabras_calculado_EN_trayectoria.png`
+### Versión en español
+
+- `outputs/figuras/principal/PRINCIPAL_n_palabras_calculado_ES_distribucion.pdf`
+- `outputs/figuras/principal/PRINCIPAL_n_palabras_calculado_ES_distribucion.png`
+- `outputs/figuras/principal/PRINCIPAL_n_palabras_calculado_ES_individuales.pdf`
+- `outputs/figuras/principal/PRINCIPAL_n_palabras_calculado_ES_individuales.png`
+- `outputs/figuras/principal/PRINCIPAL_n_palabras_calculado_ES_trayectoria.pdf`
+- `outputs/figuras/principal/PRINCIPAL_n_palabras_calculado_ES_trayectoria.png`
+
+### English version
+
+- `outputs/figuras/principal/en/MAIN_n_palabras_calculado_EN_distribucion.pdf`
+- `outputs/figuras/principal/en/MAIN_n_palabras_calculado_EN_distribucion.png`
+- `outputs/figuras/principal/en/MAIN_n_palabras_calculado_EN_individuales.pdf`
+- `outputs/figuras/principal/en/MAIN_n_palabras_calculado_EN_individuales.png`
+- `outputs/figuras/principal/en/MAIN_n_palabras_calculado_EN_trayectoria.pdf`
+- `outputs/figuras/principal/en/MAIN_n_palabras_calculado_EN_trayectoria.png`
 
 
 ## 6. Lo que este informe NO permite afirmar
@@ -191,12 +202,13 @@ Contrastes **entre tiempos** en cada condición (ajuste Holm):
 
 ## 7. Trazabilidad
 
-Artefactos de los que sale cada número (rutas relativas a `Analisis agosto v2/`):
+Los siguientes artefactos constituyen las fuentes de los valores reportados en este informe. Las rutas se expresan de forma **relativa al directorio de análisis `Analisis agosto v2/`**, sin incorporar rutas locales o absolutas del equipo de análisis.
 
 - `principal/tablas/auditoria_principal.csv`
 - `principal/tablas/descriptivos_condicion_tiempo.csv`
 - `principal/tablas/resumen_modelos_validos.csv`
-- `principal/tablas/principal_<variable>_EMM.csv` y `..._contrastes_{cond,tiempo}.csv`
+- `principal/tablas/principal_<variable>_EMM.csv`
+- `principal/tablas/principal_<variable>_contrastes_cond.csv`
+- `principal/tablas/principal_<variable>_contrastes_tiempo.csv`
 - `principal/modelos/modelos_principal.rds`
 - `principal/...`
-
