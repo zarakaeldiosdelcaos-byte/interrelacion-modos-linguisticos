@@ -1,17 +1,11 @@
-R version 4.6.1 (2026-06-24 ucrt)
-Platform: x86_64-w64-mingw32/x64
-Running under: Windows 11 x64 (build 26220)
+Entorno R utilizado para la corrida:
 
-Matrix products: default
-  LAPACK version 3.12.1
-
-locale:
-[1] LC_COLLATE=Spanish_Mexico.utf8  LC_CTYPE=Spanish_Mexico.utf8   
-[3] LC_MONETARY=Spanish_Mexico.utf8 LC_NUMERIC=C                   
-[5] LC_TIME=Spanish_Mexico.utf8    
-
-time zone: America/Mexico_City
-tzcode source: internal
+R: 4.6.1
+Plataforma: x86_64-w64-mingw32/x64
+Sistema operativo de referencia: Windows 11 x64
+Locale de procesamiento textual: Spanish_Mexico.utf8
+LC_NUMERIC: C
+Zona horaria: America/Mexico_City
 
 attached base packages:
 [1] stats     graphics  grDevices utils     datasets  methods   base     
