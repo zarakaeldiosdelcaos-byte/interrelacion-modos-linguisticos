@@ -1,4 +1,5 @@
-# Análisis NLP de textos en 3 tiempos — paquete de análisis
+# Análisis NLP de textos en 3 tiempos 
+**paquete de análisis**
 
 ![Portada principal](docs/assets/Portada%20principal.jpg)
 
@@ -9,8 +10,8 @@
 
 ## Qué es el estudio
 
-Diseño longitudinal de escritura en tres iteraciones — **T1** sin estímulo, **T2** un estímulo,
-**T3** tres estímulos acumulados —, con tres condiciones de estímulo: **Texto**, **Audio**,
+Es un diseño longitudinal de escritura en tres iteraciones: **T1** sin estímulo, **T2** un estímulo,
+**T3** tres estímulos acumulados, con tres condiciones de estímulo: **Texto**, **Audio**,
 **Imagen** (el estímulo de audio y el texto son el poema "Habitación de hotel").
 ## Cohortes: son dos muestras distintas, no dos olas de un estudio
 
