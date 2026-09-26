@@ -1,6 +1,8 @@
 # Informe de resultados — cohorte PILOTO
 
-**Generado:** 2026-09-25 19:16  
+![Resultados de la cohorte piloto](../../docs/assets/portada_resultados_piloto.jpg)
+
+**Generado:** 2026-09-25 19:16 
 **Cohorte:** estudio piloto (17 participantes)  
 **Datos de origen:** `Analisis agosto v2/` (corrida del script `Experimento ALC_v5_corregido.R`)  
 **Contenido:** solo agregados (n, medias, desviaciones, efectos, p-valores). Este informe **no contiene narrativas** de participantes.  
@@ -13,6 +15,8 @@
 
 Tres iteraciones por participante: **T1** sin estímulo (línea base), **T2** un estímulo, 
 **T3** tres estímulos acumulados. Condiciones: Texto (leer), Audio (escuchar), Imagen (observar).
+
+![Diseño y flujo de participantes](../../docs/assets/diseno_flujo_participantes_piloto.jpg)
 
 - Participantes: **17**
 - Observaciones por participante: **3** (T1, T2, T3) → total 51 observaciones
@@ -83,6 +87,8 @@ _Ninguna variable quedó excluida del modelado en la cohorte piloto._
 
 ## 4. Modelos lineales mixtos
 
+![Modelo lineal mixto — cohorte piloto](../../docs/assets/modelo_mixto_piloto.jpg)
+
 Especificación: `valor ~ condición × tiempo + (1 | participante)`, estimación REML, 
 grados de libertad Satterthwaite. La condición es un factor **entre** sujetos y el tiempo **intra** sujeto.
 
@@ -151,19 +157,25 @@ Contrastes **entre tiempos** en cada condición (ajuste Holm):
 
 ## 5. Figuras
 
-- `C:/Users/saraq/Downloads/Experimento Alfonso Lopez Corral/Analisis agosto v2/piloto/graficas_es/PILOTO_n_palabras_calculado_ES_distribucion.pdf`
-- `C:/Users/saraq/Downloads/Experimento Alfonso Lopez Corral/Analisis agosto v2/piloto/graficas_es/PILOTO_n_palabras_calculado_ES_distribucion.png`
-- `C:/Users/saraq/Downloads/Experimento Alfonso Lopez Corral/Analisis agosto v2/piloto/graficas_es/PILOTO_n_palabras_calculado_ES_individuales.pdf`
-- `C:/Users/saraq/Downloads/Experimento Alfonso Lopez Corral/Analisis agosto v2/piloto/graficas_es/PILOTO_n_palabras_calculado_ES_individuales.png`
-- `C:/Users/saraq/Downloads/Experimento Alfonso Lopez Corral/Analisis agosto v2/piloto/graficas_es/PILOTO_n_palabras_calculado_ES_trayectoria.pdf`
-- `C:/Users/saraq/Downloads/Experimento Alfonso Lopez Corral/Analisis agosto v2/piloto/graficas_es/PILOTO_n_palabras_calculado_ES_trayectoria.png`
+Las figuras correspondientes a la cohorte piloto fueron generadas mediante los scripts del pipeline ejecutados en **R/RStudio** y se encuentran disponibles en formatos PNG y PDF de alta resolución. Las versiones en español e inglés se conservan para facilitar la revisión técnica y la preparación de materiales científicos.
 
-- `C:/Users/saraq/Downloads/Experimento Alfonso Lopez Corral/Analisis agosto v2/piloto/figures_en/PILOT_n_palabras_calculado_EN_distribucion.pdf`
-- `C:/Users/saraq/Downloads/Experimento Alfonso Lopez Corral/Analisis agosto v2/piloto/figures_en/PILOT_n_palabras_calculado_EN_distribucion.png`
-- `C:/Users/saraq/Downloads/Experimento Alfonso Lopez Corral/Analisis agosto v2/piloto/figures_en/PILOT_n_palabras_calculado_EN_individuales.pdf`
-- `C:/Users/saraq/Downloads/Experimento Alfonso Lopez Corral/Analisis agosto v2/piloto/figures_en/PILOT_n_palabras_calculado_EN_individuales.png`
-- `C:/Users/saraq/Downloads/Experimento Alfonso Lopez Corral/Analisis agosto v2/piloto/figures_en/PILOT_n_palabras_calculado_EN_trayectoria.pdf`
-- `C:/Users/saraq/Downloads/Experimento Alfonso Lopez Corral/Analisis agosto v2/piloto/figures_en/PILOT_n_palabras_calculado_EN_trayectoria.png`
+### Versión en español
+
+- `outputs/figuras/piloto/PILOTO_n_palabras_calculado_ES_distribucion.pdf`
+- `outputs/figuras/piloto/PILOTO_n_palabras_calculado_ES_distribucion.png`
+- `outputs/figuras/piloto/PILOTO_n_palabras_calculado_ES_individuales.pdf`
+- `outputs/figuras/piloto/PILOTO_n_palabras_calculado_ES_individuales.png`
+- `outputs/figuras/piloto/PILOTO_n_palabras_calculado_ES_trayectoria.pdf`
+- `outputs/figuras/piloto/PILOTO_n_palabras_calculado_ES_trayectoria.png`
+
+### English version
+
+- `outputs/figuras/piloto/en/PILOT_n_palabras_calculado_EN_distribucion.pdf`
+- `outputs/figuras/piloto/en/PILOT_n_palabras_calculado_EN_distribucion.png`
+- `outputs/figuras/piloto/en/PILOT_n_palabras_calculado_EN_individuales.pdf`
+- `outputs/figuras/piloto/en/PILOT_n_palabras_calculado_EN_individuales.png`
+- `outputs/figuras/piloto/en/PILOT_n_palabras_calculado_EN_trayectoria.pdf`
+- `outputs/figuras/piloto/en/PILOT_n_palabras_calculado_EN_trayectoria.png`
 
 
 ## 6. Lo que este informe NO permite afirmar
@@ -179,12 +191,13 @@ Contrastes **entre tiempos** en cada condición (ajuste Holm):
 
 ## 7. Trazabilidad
 
-Artefactos de los que sale cada número (rutas relativas a `Analisis agosto v2/`):
+Los siguientes artefactos constituyen las fuentes de los valores reportados en este informe. Las rutas se expresan de forma **relativa al directorio de análisis `Analisis agosto v2/`**, sin incorporar rutas locales o absolutas del equipo de análisis.
 
 - `piloto/tablas/auditoria_piloto.csv`
 - `piloto/tablas/descriptivos_condicion_tiempo.csv`
 - `piloto/tablas/resumen_modelos_validos.csv`
-- `piloto/tablas/piloto_<variable>_EMM.csv` y `..._contrastes_{cond,tiempo}.csv`
+- `piloto/tablas/piloto_<variable>_EMM.csv`
+- `piloto/tablas/piloto_<variable>_contrastes_cond.csv`
+- `piloto/tablas/piloto_<variable>_contrastes_tiempo.csv`
 - `piloto/modelos/modelos_piloto.rds`
 - `piloto/...`
-

@@ -2,8 +2,8 @@
 README — DATOS DEL PILOTO (EXTRACCIÓN PARA ARTÍCULO)
 ===============================================================
 
-Fecha de generación: 2026-09-25 19:15:26 
-Carpeta: C:\Users\saraq\Downloads\Experimento Alfonso Lopez Corral\Analisis agosto v2\piloto\datos 
+Fecha de generación: 2026-09-25 19:15:26
+Carpeta: piloto/datos (ruta relativa a `Analisis agosto v2/`)
 
 DESCRIPCIÓN GENERAL
 ---------------------------------------------------------------
@@ -19,43 +19,49 @@ Los datos han sido procesados a través del pipeline completo:
   - Análisis de similitudes y cambios semánticos
   - Modelos lineales mixtos (resultados en carpeta 'modelos/')
 
-Número de participantes: 17 
-Número de observaciones (filas en ancho): 17 
-Condiciones: Texto, Audio, Imagen 
+Número de participantes: 17
+Número de observaciones (filas en ancho): 17
+Condiciones: Texto, Audio, Imagen
 Iteraciones: T1, T2, T3 (3 por participante)
 
 ARCHIVOS GENERADOS
 ---------------------------------------------------------------
 
-📄 ancho_piloto.rds 
-    Archivo adicional no documentado. Revisar su contenido. 
+📄 ancho_piloto.rds
+    Archivo adicional no documentado. Revisar su contenido.
 
-📄 ancho_piloto_completo.csv 
-    Versión CSV del dataframe ancho (mismo contenido que el RDS). 
+📄 ancho_piloto_completo.csv
+    Versión CSV del dataframe ancho (mismo contenido que el RDS).
 
-📄 ancho_piloto_completo.rds 
-    Dataframe en formato ancho (RDS) con todas las variables calculadas (lingüísticas, diccionarios, prototipos, PCA, etc.). 
+📄 ancho_piloto_completo.rds
+    Dataframe en formato ancho (RDS) con todas las variables calculadas
+    (lingüísticas, diccionarios, prototipos, PCA, etc.).
 
-📄 embeddings_piloto_t1.rds 
-    Matriz de embeddings (normalizados) para el tiempo 1 (T1). Dimensiones: n_observaciones × 384. 
+📄 embeddings_piloto_t1.rds
+    Matriz de embeddings (normalizados) para el tiempo 1 (T1).
+    Dimensiones: n_observaciones × 384.
 
-📄 embeddings_piloto_t2.rds 
-    Matriz de embeddings (normalizados) para el tiempo 2 (T2). Dimensiones: n_observaciones × 384. 
+📄 embeddings_piloto_t2.rds
+    Matriz de embeddings (normalizados) para el tiempo 2 (T2).
+    Dimensiones: n_observaciones × 384.
 
-📄 embeddings_piloto_t3.rds 
-    Matriz de embeddings (normalizados) para el tiempo 3 (T3). Dimensiones: n_observaciones × 384. 
+📄 embeddings_piloto_t3.rds
+    Matriz de embeddings (normalizados) para el tiempo 3 (T3).
+    Dimensiones: n_observaciones × 384.
 
-📄 piloto_identificacion.csv 
-    Columnas de identificación: id_participante, participante, condicion, fuente. 
+📄 piloto_identificacion.csv
+    Columnas de identificación: id_participante, participante, condicion, fuente.
 
-📄 piloto_longitudinal.csv 
-    Archivo adicional no documentado. Revisar su contenido. 
+📄 piloto_longitudinal.csv
+    Archivo adicional no documentado. Revisar su contenido.
 
-📄 piloto_metricas_linguisticas.csv 
-    Métricas lingüísticas básicas: n_palabras, ttr, n_oraciones, long_palabra, palabras_oracion (todas en T1, T2, T3). 
+📄 piloto_metricas_linguisticas.csv
+    Métricas lingüísticas básicas:
+    n_palabras, ttr, n_oraciones, long_palabra, palabras_oracion
+    (todas en T1, T2, T3).
 
-📄 README_DATOS_PILOTO.txt 
-    Este mismo archivo (documentación). 
+📄 README_DATOS_PILOTO.txt
+    Este mismo archivo (documentación).
 
 INSTRUCCIONES DE USO
 ---------------------------------------------------------------
@@ -89,3 +95,4 @@ Modelos mixtos: lmer (lme4) con Satterthwaite para grados de libertad
 ===============================================================
 FIN DEL README
 ===============================================================
+

@@ -2,49 +2,67 @@
 %  RESULTADOS DEL ESTUDIO PRINCIPAL — sección lista para manuscrito
 % ----------------------------------------------------------------------------
 %  NOTA DE PROCEDENCIA (no aparece en el PDF compilado):
-%  Estadísticos de la corrida completa y verificada del pipeline
-%  (Experimento ALC_v5_corregido.R, v5.9, SHA-256 1143b36a…). Origen, relativo a
-%  «Analisis agosto v2/»:
-%     · piloto/tablas/resumen_modelos_validos.csv            (ANOVA del modelo)
+%  Los estadísticos de esta sección provienen de la corrida del pipeline
+%  Experimento ALC_v5_corregido.R, v5.9. La procedencia de los resultados se
+%  conserva mediante rutas relativas al directorio «Analisis agosto v2/».
+%
+%  Principales fuentes de resultados:
+%     · principal/tablas/resumen_modelos_validos.csv
+%       (ANOVA del modelo)
 %     · principal/tablas/principal_n_palabras_calculado_EMM.csv
+%       (medias marginales estimadas)
 %     · principal/tablas/principal_n_palabras_calculado_contrastes_{tiempo,cond}.csv
-%     · piloto/tablas/descriptivos_condicion_tiempo.csv      (medias y DE)
-%     · resultados/tablas/datos_completos_ancho.csv          (filtrando fuente = principal)
-%     · outputs/tablas/tabla_demora.csv                      (modelo con demora)
-%  Figuras: copiadas de la misma corrida a la carpeta «figuras/». Las figuras de
-%  contenido (temas, prototipos, emociones, similitud) disponibles se calcularon
-%  sobre el CONJUNTO COMPLETO (n = 40); las de este documento son las del
-%  principal o las que usan solo variables con datos en el principal.
-%  Claves de cita: se conservan FuentesRibes2001, CamachoGomez2007 y Ryle2005;
-%  se añade LopezCorral2024 con la entrada completa.
-% ============================================================================
+%       (contrastes a posteriori)
+%     · principal/tablas/descriptivos_condicion_tiempo.csv
+%       (medias y desviaciones estándar)
+%     · resultados/tablas/datos_completos_ancho.csv
+%       (filtrando fuente = principal)
+%     · outputs/tablas/tabla_demora.csv
+%       (modelo con demora)
+%
+%  Las figuras incluidas en esta sección corresponden a los análisis de la
+%  cohorte principal o, cuando se indica expresamente, a análisis calculados
+%  sobre el conjunto completo (n = 40). Las figuras de contenido —temas,
+%  prototipos, emociones y similitud— deben distinguirse de aquellas basadas
+%  exclusivamente en variables disponibles para la cohorte principal.
+%
+%  Identificador de la corrida:
+%     Experimento ALC_v5_corregido.R, v5.9
+%     SHA-256: 1143b36a…  [identificador abreviado]
+%
+%  Bibliografía:
+%     Las claves de cita utilizadas en esta sección son
+%     FuentesRibes2001, CamachoGomez2007, Ryle2005 y LopezCorral2024.
+% ============================================================================ 
 
 \documentclass[12pt]{article}
+
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
-\usepackage{lmodern}                 % fuentes vectoriales Type 1 con mapa Unicode
+\usepackage{lmodern}
 
-% --- NUEVO: permite usar [H] en tablas y figuras (posición exacta) ---
-\usepackage{float}
-
-% --- NUEVO: mejora el justificado y reduce overfull/underfull hbox ---
-\usepackage{microtype}
-
-% --- NUEVO: permite incluir PDFs en versión 1.7 sin advertencia ---
-\pdfminorversion=7
-
-% rótulos de figuras y tablas en español (por defecto LaTeX usa 'Figure' y 'Table')
-\renewcommand{\figurename}{Figura}
-\renewcommand{\tablename}{Tabla}
 \usepackage{amsmath}
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{caption}
 \usepackage{subcaption}
+\usepackage{float}
+\usepackage{microtype}
 \usepackage{geometry}
-\geometry{a4paper, margin=1in}
 \usepackage{setspace}
+
+\pdfminorversion=7
+
+\renewcommand{\figurename}{Figura}
+\renewcommand{\tablename}{Tabla}
+
+\geometry{
+	a4paper,
+	margin=1in
+}
+
 \onehalfspacing
+
 \graphicspath{{figuras/}}
 
 \setlength{\textfloatsep}{10pt plus 2pt minus 2pt}
@@ -376,14 +394,18 @@
 	\subsection{Síntesis de resultados empíricos}
 	
 	En retrospectiva, el análisis integral de la cohorte principal consolida un panorama empírico altamente consistente. A diferencia de lo observado en el estudio piloto, aquí se documenta de manera inequívoca que la extensión del texto aumenta de forma sostenida a lo largo de los tres momentos del episodio, pero lo hace exactamente con la misma magnitud sin importar si el modo reactivo asignado fue la lectura, la escucha o la observación de imágenes. Este incremento generalizado en el volumen de palabras no se traduce en una mayor complejidad sintáctica intraoracional, y su trayectoria no se vio afectada por la introducción de demoras temporales entre el estímulo y la escritura. Asimismo, la mayor fijación semántica ocurre invariablemente tras el primer contacto con el referente externo, consolidando a partir de ahí un proceso de revisión e iteración sobre el texto ya escrito. Finalmente, las variaciones en las esferas emocionales y temáticas demostraron estar dominadas casi por completo por la heterogeneidad de los participantes, remarcando que el desarrollo de este episodio de escritura es, en última instancia, un fenómeno marcado profundamente por la variabilidad individual.
+
 % -------------------------------------------------------------------------
-% NOTA sobre figuras no incluidas: las figuras de emociones (fig3), diversidad
-% léxica (fig4), temas (fig13), similitud textual (fig14), cambio semántico
-% multivariado (fig12), mapa integrado (fig15) y trayectorias PCA
-% (figura_06_pca_es) se calcularon sobre el CONJUNTO COMPLETO (n = 40). No se
-% incluyen aquí para no atribuir al estudio principal análisis de otra muestra;
-% están en el documento combinado.
-% ------------------------------------------------------------------------
+% Alcance de las figuras:
+% Las figuras de emociones (fig3), diversidad léxica (fig4), temas (fig13),
+% similitud textual (fig14), cambio semántico multivariado (fig12), mapa
+% integrado (fig15) y trayectorias PCA (figura_06_pca_es) fueron calculadas
+% sobre el conjunto completo de datos (n = 40), que integra las cohortes
+% piloto (n = 17) y principal (n = 23). Por esta razón, no se incluyen en
+% este documento, cuyo alcance está restringido a los análisis de la cohorte
+% principal. Estas figuras se conservan en los artefactos correspondientes
+% al análisis conjunto.
+% -------------------------------------------------------------------------
 
 	\section{Discusión}
 	

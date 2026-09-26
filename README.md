@@ -1,5 +1,7 @@
 # Análisis NLP de textos en 3 tiempos — paquete de análisis
 
+![Portada principal](docs/assets/Portada%20principal.jpg)
+
 > **Estado del paquete.** Este repositorio publica **método, código y resultados agregados**.
 > No contiene datos de participantes. Los resultados son los de la corrida auditada: el código
 > ha sido verificado sintácticamente (`parse()`), **no** re-ejecutado de punta a punta para este
@@ -10,7 +12,6 @@
 Diseño longitudinal de escritura en tres iteraciones — **T1** sin estímulo, **T2** un estímulo,
 **T3** tres estímulos acumulados —, con tres condiciones de estímulo: **Texto**, **Audio**,
 **Imagen** (el estímulo de audio y el texto son el poema "Habitación de hotel").
-
 ## Cohortes: son dos muestras distintas, no dos olas de un estudio
 
 | Cohorte | Participantes | Observaciones | Texto / Audio / Imagen | `demora` |
@@ -79,6 +80,8 @@ El análisis se realiza sobre dos conjuntos de datos:
 - **Estudio piloto**: 17 participantes (utilizado como base para un artículo independiente).
 
 El pipeline integra **R** (para preprocesamiento, análisis lingüístico, sentimiento, diccionarios temáticos, modelos mixtos y visualización) con **Python** (para embeddings semánticos mediante `sentence-transformers`).
+
+![Resumen del estudio NLP](docs/assets/resumen_estudio_nlp.jpg)
 
 ---
 
@@ -205,6 +208,8 @@ Rscript R/piloto/run_piloto.R
 
 Este script ejecuta únicamente el análisis piloto, generando resultados separados en `outputs/piloto/`. Es útil para preparar un artículo científico basado exclusivamente en el piloto.
 
+![Instalación y ejecución del pipeline NLP](docs/assets/instalacion_uso_nlp.jpg)
+
 ---
 
 ## Flujo de análisis
@@ -219,6 +224,8 @@ Este script ejecuta únicamente el análisis piloto, generando resultados separa
 8. **Sensibilidad** → Modelos con demora, log, n_tokens, n_estimulos, sin outliers.
 9. **Visualización** → 15 figuras científicas en español e inglés, paneles combinados.
 10. **Resultados** → Tablas en CSV y Excel, objetos RDS.
+
+![Flujo de análisis NLP](docs/assets/flujo_analisis_nlp.jpg)
 
 ---
 
