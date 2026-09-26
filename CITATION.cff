@@ -24,6 +24,12 @@ authors:
     given-names: "Alfonso"           # TODO_CONFIRMAR
     # orcid: "https://orcid.org/0000-0000-0000-0000"   # TODO_CONFIRMAR
     # affiliation: ""                                  # TODO_CONFIRMAR
+
+  - family-names: "Gutiérrez Castro" 
+    given-names: "Lauro"            
+    # orcid: "https://orcid.org/0009-0005-5207-9448"
+    # affiliation: "Comunidad Terapéutica Under The Tree"                                  
+
 version: "1.0.0"                     # TODO_CONFIRMAR
 date-released: "2026-09-24"          # TODO_CONFIRMAR
 year: 2026                           # TODO_CONFIRMAR
