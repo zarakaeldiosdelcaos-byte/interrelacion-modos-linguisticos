@@ -11,7 +11,7 @@
 # El títular del repositorio NO es el autor del estudio.
 cff-version: 1.2.0
 message: "Si usa este material, cite el estudio y este paquete de análisis."
-title: "¿Qué sucede al escribir? Interrelación de modos lingüísticos como propuesta metodológica para el estudio de la escritura"
+title: "Interelación de modos lingüisticos"
 abstract: >-
   Análisis longitudinal de escritura en tres iteraciones (sin estímulo, un estímulo y tres
   estímulos acumulados) en tres condiciones de estímulo (texto, audio, imagen). El paquete
