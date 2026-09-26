@@ -1,57 +1,86 @@
 # Resultados integrados en el repositorio
 
-Origen: la corrida completa y verificada del pipeline v5.9 (hash `1143b36a…`), sobre textos de
-participantes reales. Este documento declara **qué entró, qué no y por qué**.
+**Origen de los resultados:** ejecución completa y verificada del pipeline v5.9, identificada mediante el hash `1143b36a…`, aplicada a textos procedentes de participantes reales.
+
+El presente documento establece el alcance de los materiales incorporados al repositorio de resultados, así como los criterios utilizados para determinar su admisibilidad, exclusión y conservación.
 
 ## Política de admisibilidad
 
-**Entra**: informes y documentos; figuras (todas, ES/EN, PNG y PDF); tablas **agregadas**
-(por grupo, por modelo o por efecto); objetos de modelo **sin** sus slots de una fila por
-participante (`datos`, `diagnosticos`), conservando modelo, ANOVA, R², medias marginales y
-contrastes; centroides de prototipos; registros de ejecución; inventarios.
+Se consideran admisibles para integración en el repositorio los siguientes tipos de materiales:
 
-**No entra**: cualquier archivo que contenga texto escrito por participantes; cualquier tabla
-con una fila por observación o por participante, aunque sea numérica; los insumos crudos
-(`.xlsx`, léxico, volcados `.RData`); los árboles duplicados de copias; los residuos de sesión.
+* informes y documentos derivados del análisis;
+* figuras en sus versiones ES/EN y en formatos PNG y PDF;
+* tablas agregadas por grupo, modelo o efecto;
+* objetos de modelo que no contengan estructuras con una fila por participante u observación, incluyendo específicamente la exclusión de los slots `datos` y `diagnosticos`, pero conservando el modelo, ANOVA, R², medias marginales estimadas y contrastes;
+* centroides de prototipos semánticos;
+* registros de ejecución;
+* inventarios y manifiestos de trazabilidad.
 
-Cada archivo candidato pasó además por una comprobación de contenido: si algún campo de texto
-supera los 200 caracteres, se rechaza. Los `.rds` de modelo pasan otra: se recorren y se cuenta
-cualquier cadena de más de 120 caracteres, que debe ser 0.
+No se consideran admisibles:
 
-## Integrado
+* archivos que contengan texto escrito por participantes;
+* tablas con una fila por observación o por participante, incluso cuando la información contenida sea exclusivamente numérica;
+* insumos crudos de análisis, incluyendo archivos `.xlsx`, léxicos y volcados `.RData`;
+* árboles o directorios duplicados derivados de copias del material de trabajo;
+* residuos o artefactos temporales de sesión.
 
-140 archivos. Inventario con rutas, tamaños y SHA-256 en
-`manifests/INVENTARIO_RESULTADOS.csv`.
+Además de estos criterios de contenido, cada archivo candidato fue sometido a una comprobación específica de seguridad del contenido. Cuando algún campo de texto contiene una cadena superior a 200 caracteres, el archivo se considera no admisible.
+
+Para los objetos `.rds` correspondientes a modelos se aplica una comprobación adicional: se recorre la estructura del objeto y se contabilizan las cadenas de texto superiores a 120 caracteres. El criterio de admisibilidad exige que el número de cadenas que superan dicho umbral sea **cero**.
+
+## Materiales integrados
+
+Se integraron **140 archivos** en el conjunto de resultados.
+
+El inventario correspondiente, que registra rutas, tamaños y valores SHA-256, se encuentra en:
+
+```text
+manifests/INVENTARIO_RESULTADOS.csv
+```
+
+Este inventario constituye la referencia para identificar los archivos efectivamente incorporados y facilitar su trazabilidad dentro del repositorio.
 
 ## Documentos de resultados (manuscritos)
 
-Los tres manuscritos de resultados viven junto a los resultados de su cohorte, con las figuras que
-citan, de modo que cada carpeta es un paquete autocontenido:
+Los tres manuscritos de resultados se almacenan junto con los materiales gráficos correspondientes a cada cohorte. De esta manera, cada directorio constituye un paquete autocontenido que reúne el documento y las figuras que este referencia.
 
-| documento | ruta | páginas | figuras |
-| --- | --- | --- | --- |
-| Resultados del piloto (n = 17) | `results/piloto/manuscrito/` | 17 | 4 |
-| Resultados del principal (n = 23) | `results/principal/manuscrito/` | 19 | 10 |
-| Resultados del conjunto (17 + 23) | `results/combinado/manuscrito/` | 22 | 14 |
+| Documento                                 | Ruta                            | Páginas | Figuras |
+| ----------------------------------------- | ------------------------------- | ------: | ------: |
+| Resultados del estudio piloto (n = 17)    | `results/piloto/manuscrito/`    |      17 |       4 |
+| Resultados del estudio principal (n = 23) | `results/principal/manuscrito/` |      19 |      10 |
+| Resultados del conjunto (17 + 23)         | `results/combinado/manuscrito/` |      22 |      14 |
 
-Los tres declaran en su propio texto: qué cohorte analizan, que el conjunto de 40 son **dos muestras
-independientes** (no una muestra de 40), que las figuras rotuladas como sentimiento global usan
-*tristeza* como duplicado declarado porque el pipeline nunca calculó una medida tipo Bing/VADER, y
-que el criterio de casos influyentes es inoperante en el modelo del conjunto (115 de 120
-observaciones marcadas). Contienen únicamente resultados agregados: ninguna celda con texto de
-participantes, ninguna fila por participante.
+Los tres manuscritos especifican explícitamente:
 
-## Excluido y por qué
+* la cohorte correspondiente al análisis;
+* que el conjunto total de 40 participantes corresponde a **dos muestras independientes** y no a una única muestra de tamaño 40;
+* que las figuras rotuladas como *sentimiento global* utilizan *tristeza* como sustituto declarado, debido a que el pipeline no calculó una medida de sentimiento del tipo Bing o VADER;
+* que el criterio de identificación de casos influyentes resulta inoperante para el modelo del conjunto, debido a que fueron marcadas 115 de las 120 observaciones.
 
-| archivo (en la corrida) | motivo |
-| --- | --- |
-| `logs/ejecucion_v5_20260925_1910_v59_final.log` | 2 celdas con texto > 200 caracteres |
-| `resultados/tablas/datos_completos_ancho.csv` | contiene las columnas texto_t1/t2/t3 (narrativas) |
-| `resultados/tablas/datos_formato_largo.csv` | contiene la columna texto (narrativas) |
+Los manuscritos y sus materiales asociados contienen exclusivamente resultados agregados. No se incorporan celdas con texto producido por participantes ni tablas estructuradas con una fila individual por participante.
 
-## No encontrados
+## Materiales excluidos y justificación
 
-- `modelo limpio: modelos_comparativos.rds`
-- `modelo limpio: modelos_piloto.rds`
-- `modelo limpio: modelos_principal.rds`
-- `resultados/modelos/modelos_mixtos.rds`
+Los siguientes archivos, identificados durante la ejecución del pipeline, fueron excluidos del conjunto integrado por las razones indicadas:
+
+| Archivo identificado en la corrida              | Motivo de exclusión                                                                                            |
+| ----------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `logs/ejecucion_v5_20260925_1910_v59_final.log` | Contiene 2 celdas con texto superior a 200 caracteres.                                                         |
+| `resultados/tablas/datos_completos_ancho.csv`   | Contiene las columnas `texto_t1`, `texto_t2` y `texto_t3`, correspondientes a las narrativas de participantes. |
+| `resultados/tablas/datos_formato_largo.csv`     | Contiene la columna `texto`, correspondiente a las narrativas de participantes.                                |
+
+La exclusión se realizó con independencia del formato técnico del archivo: la presencia de contenido textual de participantes constituye por sí misma un criterio suficiente para impedir su incorporación al conjunto público de resultados.
+
+## Materiales no encontrados
+
+Durante la comprobación del conjunto de resultados se identificaron como no disponibles los siguientes archivos esperados:
+
+```text
+modelo limpio: modelos_comparativos.rds
+modelo limpio: modelos_piloto.rds
+modelo limpio: modelos_principal.rds
+resultados/modelos/modelos_mixtos.rds
+```
+
+Estos archivos no forman parte del inventario de materiales integrados y, por tanto, no deben considerarse artefactos disponibles del repositorio hasta que exista una versión identificable y verificable de los mismos.
+

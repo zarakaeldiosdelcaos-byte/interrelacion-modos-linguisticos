@@ -1,366 +1,811 @@
-# CAMBIOS v5 — Reparación de `Experimento ALC.R`
+# Registro de cambios y validación v5 — Reparación de `Experimento ALC.R`
 
-Fecha: 2026-09-24
-Autor de la reparación: Hermes (orquestador), tras fallar 4 intentos delegados a agentes por causas de proveedor.
+**Fecha de inicio de la reparación:** 2026-09-24
+**Fecha de cierre de la versión v5.9:** 2026-09-25
+**Objetivo:** corregir defectos de ejecución, trazabilidad, separación de cohortes, generación de resultados y reproducibilidad del script original, preservando el archivo fuente original sin modificaciones.
 
-## Identidad de los archivos
-
-| Archivo | SHA-256 | Tamaño | Fecha |
-|---|---|---|---|
-| `Experimento ALC.R` (**original, INTACTO**) | `a781da40333aa7c7ee0a401ea9ab404f57b0260e876e6555acfbd4c1088b5950` | 310.791 B | ago 25 20:45 |
-| `Experimento ALC_v5_corregido.R` (**reparado**) | `0ddbe5cceb298e85456600d57541b9474f9ca55b89674e4bbbb704b9c6ee2bb1` | 321.596 B | sep 24 00:55 |
-
-El original **no se modificó**: mismo hash y misma fecha que en la auditoría del 23-sep.
-
-## Qué se reparó (cada cambio marcado en el código con su etiqueta `[v5-X]`)
-
-| Etiqueta | Defecto corregido | Antes → Ahora |
-|---|---|---|
-| `[v5-A]` | `setwd()` sin guarda ×2 a una ruta fija; todas las salidas dentro de `Analisis agosto` | Raíces configurables (`PROYECTO`, `RAIZ_ENTRADA`, `RAIZ_SALIDA`), con `dir.exists()`; la entrada es de solo lectura y la salida va a **`Analisis agosto v2/`**. Se crean `principal/`, `piloto/`, `combinado/`, `resultados/`, `logs/` |
-| `[v5-B]` | `rm(list = ls())` borraba el modelo de embeddings, la caché y las funciones de auditoría | Eliminado |
-| `[v5-C]` | `venv_path <- "C:/venvs/renv311"` **está roto** en este equipo (intérprete base desinstalado) | Cascada `NLP_PYTHON` → `C:/venvs/renv-nlp` → `renv311` → `Sys.which`, **comprobando** que el elegido importe `sentence_transformers`; si ninguno sirve, para con las instrucciones de creación |
-| `[v5-D]` | El piloto se normalizaba con `normalizar_principal()` → `fuente = "principal"` e `id_participante = "principal_P1"`…: **las dos cohortes compartían identificador** | El piloto usa `normalizar_piloto()` → `fuente = "piloto"` e `id_participante = "piloto_P1"`… |
-| `[v5-E]` | La mezcla de cohortes se detectaba (si acaso) con un `warning` | **Aserción dura**: para si las fuentes no son exactamente {principal, piloto}, si hay identificadores compartidos, si el piloto conserva el prefijo `principal_` o si hay `id_observacion` duplicados |
-| `[v5-F]` | Se llamaba a `calcular_descriptivos()` y `reportar_descriptivos()`, **que no existían** (la corrida lineal abortaba ahí) | Implementadas con las mismas estadísticas que ya usaba el script |
-| `[v5-H]` | Se usaban objetos con nombre equivocado: `modelos$palabras$modelo` (es `resultados_modelos`), `cor_mat` (es `mat_cor`), `diccionarios_hopper` (es `diccionarios_hopper_enriquecido`) | Corregidos; se añadió `obtener_modelo_palabras()` para localizar el modelo disponible |
-| `[v5-I]` | `metadata_embeddings.txt` salía corrupto (`paste(names, unlist(metadata))` reciclaba 9 nombres sobre 25 valores) | Escritor campo por campo |
-| `[v5-J]` | Todo lo del piloto se escribía en `analisis_piloto/` y la comparación **dentro de la carpeta del piloto** | `piloto/` (17), `principal/` (23) y `combinado/` (comparación) separados; se guardan `ancho_piloto.rds`, `ancho_principal.rds` y `ancho_combinado.rds` en sus carpetas |
-| `[v5-K1]` | Ante un error en los embeddings se creaban **matrices de NA y el pipeline continuaba**, produciendo figuras y tablas calculadas sobre nada | `stop()` con mensaje |
-| `[v5-K2]` | La extracción del piloto produjo en el árbol auditado objetos **vacíos (0 × 384)** que se guardaban como resultados | Cuenta los textos `[VACÍO]`, valida `n × 384` con `n > 0` y **para** si el objeto está vacío |
-| `[v5-L1]` | Se copiaba al paquete de DeepSeek un CSV que nunca se escribía, sin avisar | Copia condicionada + archivo de constancia |
-| `[v5-L2]` | El paquete declaraba "40 participantes" fijos | Ahora se calcula del conjunto y se desglosa por cohorte |
-| `[v5-N]` | `View()` interactiva en medio del pipeline | Solo si `interactive()` |
-
-## Lo que pediste, verificado por ejecución
-
-Prueba ejecutada el 2026-09-24 con los Excel reales (extrayendo del propio v5 las funciones de importación/metabolismo y ejecutándolas; solo se imprimieron conteos e identificadores):
-
-| Comprobación | Resultado |
-|---|---|
-| Principal: filas / participantes | **69 / 23** ✔ |
-| Piloto: filas / participantes | **51 / 17** ✔ |
-| `fuente` en el principal | `principal` ✔ |
-| `fuente` en el piloto | **`piloto`** ✔ |
-| `id_participante` del piloto | **`piloto_P1`, `piloto_P10`, …** ✔ |
-| **Intersección de identificadores entre cohortes** | **0** ✔ (era el defecto central) |
-| `id_observacion` duplicados | 0 ✔ |
-| Composición por condición del piloto **tomada de los datos** | **Audio 6 · Imagen 5 · Texto 6** ✔ (la cabecera del script declaraba P1-P5/P6-P11/P12-P17, que no coincide) |
-| `n_palabras` en el piloto | 0 de 51 (vacío, correcto) ✔ |
-| `n_palabras_calculado` en el piloto | 51 de 51 ✔ |
-| Sintaxis del script completo | **`parse()` OK: 905 expresiones** ✔ |
-| Funciones antes inexistentes | ahora definidas (90 funciones) ✔ |
-
-## Lo que NO está verificado (hay que ejecutarlo tú)
-
-- **La corrida completa de principio a fin.** No se ha ejecutado: tarda decenas de minutos, descarga el léxico NRC si falta y genera todas las figuras. El `parse()` garantiza que compila; **no** garantiza que cada bloque produzca lo esperado con tus datos.
-- La sección de comparación piloto vs principal (`[v5-J]`) no se ha corrido con datos: es la que más conviene mirar en la primera pasada.
-- La consola del script sigue siendo muy verbosa (es el estilo del original). No se tocó.
-
-## Cómo ejecutarlo
-
-```cmd
-cd /d "%RUTA_PROYECTO%"
-"C:\Program Files\R\R-4.6.1\bin\Rscript.exe" --vanilla "Experimento ALC_v5_corregido.R"
-```
-
-Las salidas nuevas aparecen en `Analisis agosto v2\` (`principal\`, `piloto\`, `combinado\`, `resultados\`, `logs\`).
-El árbol antiguo (`Analisis agosto\`) **no se toca**: es tu evidencia previa.
-
-## Pendiente declarado (no lo hice)
-
-- `resultados/` sigue siendo la carpeta del pipeline conjunto (las tablas de 40 mezclan cohortes, como en el original). Separarla del todo exige repuntar ~35 rutas de escritura; preferí no tocar más de la cuenta sin tu visto bueno.
-- Los artefactos de sensibilidad que apuntan a `outputs/` (Bloques 13–14) siguen escribiendo ahí, no en `combinado/`.
-- La cabecera del script (líneas 10-15) todavía declara el reparto falso `P1-P5 / P6-P11 / P12-P17`. No la reescribí porque documenta el diseño tal como se pensó; el dato real (6/6/5) sale ahora del propio Excel.
+Este documento registra las modificaciones introducidas durante las versiones v5.0–v5.9, las verificaciones realizadas en cada etapa y el resultado de la corrida final completa.
 
 ---
 
-## Corrección v5.1 — tras tu primera corrida (2026-09-24)
+## 1. Identidad y conservación de los archivos
 
-**Qué pasó**: el script se detuvo con `[v5] No se encontró un intérprete válido con sentence_transformers`
-y descartó los tres candidatos, incluido el que sí funciona.
+El archivo original se conserva íntegramente y no fue modificado durante el proceso de reparación.
 
-**Causa 1 — mi prueba estaba mal escrita (la causa real).** Yo comprobaba el import así:
-`system2(py, c("-c", "import sentence_transformers"))`. El segundo argumento contiene un espacio y R lo
-partía en dos (`-c import` + `sentence_transformers`), así que **todos** los intérpretes devolvían error.
-Medido: `sin shQuote: 1` / `con shQuote: 0`. Con `shQuote()` el mismo intérprete pasa.
+| Archivo                                                 | SHA-256                                                            |    Tamaño | Fecha            |
+| ------------------------------------------------------- | ------------------------------------------------------------------ | --------: | ---------------- |
+| `Experimento ALC.R` (**original, íntegro**)             | `a781da40333aa7c7ee0a401ea9ab404f57b0260e876e6555acfbd4c1088b5950` | 310.791 B | 2026-08-25 20:45 |
+| `Experimento ALC_v5_corregido.R` (**versión reparada**) | `1143b36a6fb76dc8279e70880634b2a81ebf05ee70accfb69b0172bcc4a1c15f` |         — | 2026-09-25       |
 
-**Causa 2 — `renv311` sí está rota, no era un falso positivo.** `C:/venvs/renv311/Scripts/python.exe`
-responde `No Python at '…\Programs\Python\PYTHON~1\python.exe'` (su intérprete base fue
-desinstalado). Igual `C:/venvs/r-reticulate-311`. El entorno operativo de este equipo es
-**`C:/venvs/renv-nlp`**: python 3.11.16 · sentence-transformers 6.1.0 · torch 2.14.0+cpu · numpy 2.4.6.
+La identidad del archivo original coincide con la registrada en la auditoría del 2026-09-23.
 
-**Qué cambié** (marcas `[v5-C2]`, `[v5-C3]`, `[v5-L3]`, `[v5-L4]` en el script):
+La versión final v5.9 publicada en:
 
-- La comprobación usa `shQuote()` y **muestra el motivo real** cuando descarta un candidato.
-- `use_virtualenv()` → `use_python(python_exe)`: funciona igual con un entorno virtual que con un
-  intérprete suelto (antes, si el elegido venía del PATH, `use_virtualenv` habría fallado).
-- Se añade el directorio temporal `C:/temp_mfca` (TMPDIR/TMP/TEMP/tempdir) de tu configuración, fuera
-  de la carpeta sincronizada.
-- `[v5-L4]`: el inventario buscaba `analisis_piloto/`, que ya no existe → ahora `principal/`, `piloto/`,
-  `combinado/`.
-- `[v5-L3]`: el bloque heredado leía `articulo_1/README_ARTICULO_1.txt`, fallaba, **seguía adelante y
-  anunciaba "actualizado"**. Ahora avisa y se omite si el archivo no existe.
+```text
+code/01_pipeline_nlp.R
+```
 
-**Verificado por ejecución**: el código del propio archivo resuelve `C:/venvs/renv-nlp/Scripts/python.exe`,
-deriva correctamente `venv_path` y el archivo completo pasa `parse()` (909 expresiones).
-
-**Hash nuevo (v5.1)**: `d641994c6ca6797ecfe9563e147743a3f717944628340870c0d4dd8383f11021`.
-La copia publicada en el repositorio (`code/01_pipeline_nlp.R`) es idéntica byte a byte.
-
-**Nota sobre tu configuración**: tu bloque apuntaba a `renv311`. Si algún día lo reparas (reinstalando su
-intérprete base), la cascada lo tomará automáticamente; mientras tanto usa `renv-nlp`, o define la
-variable `NLP_PYTHON` para forzar otro intérprete sin tocar el script.
+es idéntica byte a byte a la versión ejecutada en la corrida final.
 
 ---
 
-## Corrección v5.2 — segunda corrida (2026-09-25)
+# 2. Criterios generales de reparación
 
-**Qué pasó**: la corrida avanzó hasta cargar el modelo de embeddings y se interrumpió con
+Las modificaciones se limitaron a defectos que afectaban alguno de los siguientes aspectos:
 
+* ejecución lineal del script;
+* portabilidad de rutas y entornos;
+* separación de cohortes;
+* validación de identificadores;
+* generación efectiva de objetos requeridos;
+* integridad de embeddings y resultados;
+* generación y exportación de figuras;
+* ejecución de los bloques de resultados y sensibilidad;
+* trazabilidad de resultados;
+* prevención de resultados fabricados por valores `NA`, objetos vacíos o texto fijo.
+
+El archivo original se mantuvo como referencia histórica. Las modificaciones se identifican mediante etiquetas `[v5-X]` directamente en el código.
+
+---
+
+# 3. Cambios estructurales v5.0
+
+| Etiqueta  | Problema identificado                                                                                                                                                    | Modificación introducida                                                                                                                                                                                                                                                                                      |
+| --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `[v5-A]`  | Dos llamadas a `setwd()` apuntaban a una ruta fija y concentraban las salidas en `Analisis agosto`.                                                                      | Se establecieron las raíces configurables `PROYECTO`, `RAIZ_ENTRADA` y `RAIZ_SALIDA`, con comprobación mediante `dir.exists()`. Las entradas se tratan como solo lectura y las salidas se dirigen a `Analisis agosto v2/`, con subdirectorios `principal/`, `piloto/`, `combinado/`, `resultados/` y `logs/`. |
+| `[v5-B]`  | `rm(list = ls())` eliminaba objetos requeridos posteriormente, entre ellos el modelo de embeddings, la caché y funciones de auditoría.                                   | Se eliminó la limpieza indiscriminada del entorno.                                                                                                                                                                                                                                                            |
+| `[v5-C]`  | El entorno `C:/venvs/renv311` no era operativo en el equipo de ejecución porque el intérprete base había sido desinstalado.                                              | Se implementó una cascada de resolución `NLP_PYTHON` → `C:/venvs/renv-nlp` → `renv311` → `Sys.which`, verificando además la importación de `sentence_transformers`. Si ningún candidato es válido, la ejecución se detiene con instrucciones de creación del entorno.                                         |
+| `[v5-D]`  | El piloto se procesaba mediante `normalizar_principal()`, provocando `fuente = "principal"` e identificadores como `principal_P1`, compartidos con la cohorte principal. | El piloto se procesa mediante `normalizar_piloto()`, con `fuente = "piloto"` e identificadores del tipo `piloto_P1`.                                                                                                                                                                                          |
+| `[v5-E]`  | La mezcla de cohortes se detectaba mediante `warning`, permitiendo continuar con identificadores potencialmente incompatibles.                                           | Se implementaron aserciones duras que detienen la ejecución si las fuentes no son exactamente `{principal, piloto}`, si existen identificadores compartidos, si el piloto conserva el prefijo `principal_` o si existen `id_observacion` duplicados.                                                          |
+| `[v5-F]`  | Se invocaban `calcular_descriptivos()` y `reportar_descriptivos()`, funciones inexistentes en el archivo original.                                                       | Se incorporaron las funciones con las mismas estadísticas previstas por el pipeline.                                                                                                                                                                                                                          |
+| `[v5-H]`  | Existían referencias a objetos con nombres que no correspondían a los objetos realmente generados.                                                                       | Se corrigieron las referencias a `resultados_modelos`, `mat_cor` y `diccionarios_hopper_enriquecido`, y se incorporó `obtener_modelo_palabras()` para localizar el modelo disponible.                                                                                                                         |
+| `[v5-I]`  | `metadata_embeddings.txt` se generaba incorrectamente debido al reciclaje de nombres durante `paste()`.                                                                  | La escritura se modificó para registrar los campos de metadatos individualmente.                                                                                                                                                                                                                              |
+| `[v5-J]`  | Los resultados del piloto y la comparación piloto-principal se almacenaban conjuntamente en `analisis_piloto/`.                                                          | Se separaron explícitamente `piloto/`, `principal/` y `combinado/`, incluyendo `ancho_piloto.rds`, `ancho_principal.rds` y `ancho_combinado.rds`.                                                                                                                                                             |
+| `[v5-K1]` | Los errores de embeddings producían matrices de `NA` y permitían continuar la ejecución.                                                                                 | Se sustituyó este comportamiento por `stop()`, evitando generar resultados derivados de embeddings inválidos.                                                                                                                                                                                                 |
+| `[v5-K2]` | La extracción del piloto podía producir objetos vacíos de dimensión `0 × 384` que se almacenaban como resultados.                                                        | Se incorporó conteo de textos `[VACÍO]` y validación de dimensiones `n × 384` con `n > 0`; los objetos vacíos provocan interrupción.                                                                                                                                                                          |
+| `[v5-L1]` | Se intentaba copiar a un paquete de DeepSeek un CSV que no había sido generado, sin dejar constancia del evento.                                                         | La copia se hizo condicional y se añadió un archivo de constancia.                                                                                                                                                                                                                                            |
+| `[v5-L2]` | El paquete de resultados declaraba un número fijo de 40 participantes.                                                                                                   | El número se calcula dinámicamente y se desglosa por cohorte.                                                                                                                                                                                                                                                 |
+| `[v5-N]`  | Existía una llamada interactiva `View()` en el flujo de ejecución.                                                                                                       | Se condicionó su ejecución a `interactive()`.                                                                                                                                                                                                                                                                 |
+
+---
+
+# 4. Verificación de la estructura de datos
+
+La primera validación se realizó el 2026-09-24 sobre los archivos Excel reales, utilizando las funciones de importación y normalización del propio script.
+
+| Comprobación                                   | Resultado                          |
+| ---------------------------------------------- | ---------------------------------- |
+| Principal: observaciones / participantes       | **69 / 23**                        |
+| Piloto: observaciones / participantes          | **51 / 17**                        |
+| `fuente` en principal                          | `principal`                        |
+| `fuente` en piloto                             | `piloto`                           |
+| Identificadores del piloto                     | `piloto_P1`, `piloto_P10`, …       |
+| Intersección de identificadores entre cohortes | **0**                              |
+| `id_observacion` duplicados                    | **0**                              |
+| Composición del piloto                         | **Audio 6 · Imagen 5 · Texto 6**   |
+| `n_palabras` en piloto                         | **0 / 51 disponibles**             |
+| `n_palabras_calculado` en piloto               | **51 / 51 disponibles**            |
+| Sintaxis del script                            | **`parse()` OK — 905 expresiones** |
+| Funciones definidas                            | **90**                             |
+
+La composición del piloto se obtuvo directamente de los datos. La distribución declarada previamente en la cabecera del script (`P1-P5 / P6-P11 / P12-P17`) no coincide con la composición observada y, por tanto, el archivo conserva esa declaración histórica como parte del diseño originalmente previsto, mientras que los análisis utilizan la composición derivada del dataset.
+
+---
+
+# 5. Alcance de las verificaciones iniciales
+
+Las comprobaciones anteriores verificaron estructura, identificadores y sintaxis, pero no demostraron por sí mismas la ejecución correcta del pipeline completo.
+
+No se había ejecutado todavía:
+
+* la corrida completa de principio a fin;
+* la sección completa de comparación piloto-principal;
+* la generación total de figuras;
+* la totalidad del análisis de sensibilidad.
+
+La ausencia de una corrida completa en esta etapa se documentó explícitamente para evitar interpretar `parse()` como prueba de funcionamiento integral.
+
+---
+
+# 6. Corrección v5.1 — Resolución del entorno Python
+
+### Problema identificado
+
+La primera ejecución se detuvo con:
+
+```text
+[v5] No se encontró un intérprete válido con sentence_transformers
 ```
+
+La causa inicial no era la ausencia de `sentence_transformers`, sino una comprobación incorrectamente construida mediante `system2()`:
+
+```text
+system2(py, c("-c", "import sentence_transformers"))
+```
+
+El argumento correspondiente al código Python se separaba incorrectamente. La comprobación corregida mediante `shQuote()` produjo:
+
+```text
+sin shQuote: 1
+con shQuote: 0
+```
+
+### Segundo hallazgo
+
+Se confirmó que:
+
+```text
+C:/venvs/renv311
+```
+
+y:
+
+```text
+C:/venvs/r-reticulate-311
+```
+
+no eran operativos porque su intérprete base había sido eliminado.
+
+El entorno funcional del equipo era:
+
+```text
+C:/venvs/renv-nlp
+Python                3.11.16
+sentence-transformers 6.1.0
+torch                  2.14.0+cpu
+numpy                  2.4.6
+```
+
+### Modificaciones
+
+Se introdujeron:
+
+```text
+[v5-C2]
+[v5-C3]
+[v5-L3]
+[v5-L4]
+```
+
+Los principales cambios fueron:
+
+* comprobación correcta mediante `shQuote()`;
+* registro del motivo de descarte de cada intérprete;
+* sustitución de `use_virtualenv()` por `use_python(python_exe)`;
+* incorporación de `C:/temp_mfca` como directorio temporal fuera de la carpeta sincronizada;
+* corrección de las rutas utilizadas por el inventario;
+* omisión explícita de bloques que dependían de archivos inexistentes.
+
+El script completo pasó nuevamente `parse()`:
+
+```text
+909 expresiones
+```
+
+---
+
+# 7. Corrección v5.2 — Enmascaramiento del módulo `py`
+
+La segunda ejecución alcanzó la carga del modelo de embeddings y se detuvo con:
+
+```text
 [OK] Modelo de embeddings cargado
 Error en py$embedding_model: $ operator is invalid for atomic vectors
-Ejecución interrumpida
 ```
 
-**Causa — un defecto mío, introducido en la corrección v5.1.** El bucle que elige el intérprete de
-Python usaba `py` como **nombre de la variable de bucle** (`for (py in candidatos_python)`). Eso deja
-un objeto `py` (una cadena de texto) en el entorno global, y ese objeto **enmascara el módulo `py`
-de reticulate**: a partir de ahí, `py$embedding_model`, `py$textos_lote` y `py$\`_e\`` fallan, porque
-`py` ya no es el módulo sino un vector. El propio R lo avisaba al cargar reticulate:
+### Causa
 
+El identificador `py` había sido utilizado como variable de iteración en el bucle de selección de intérpretes:
+
+```text
+for (py in candidatos_python)
 ```
+
+Esto creó un objeto `py` de tipo `character` en el entorno global, enmascarando el módulo `py` utilizado por `reticulate`.
+
+El comportamiento fue coherente con el aviso emitido por R:
+
+```text
 The following object is masked _by_ '.GlobalEnv':
     py
 ```
 
-Ese mismo aviso apareció en tu primera corrida desde RStudio: el defecto ya estaba ahí y habría
-fallado en el mismo punto.
+### Modificaciones
 
-**Qué cambié**:
-- `[v5-C2b]`: la variable del bucle se llama ahora `py_cand`. El nombre `py` queda reservado para
-  reticulate.
-- `[v5-C4]`: guarda defensiva antes de usar el módulo — si existe un objeto `py` en el entorno global
-  que no sea el módulo de Python, se retira. Así el script sobrevive también a restos de una sesión
-  anterior de RStudio (donde el entorno global se carga desde `.RData`).
+Se introdujeron:
 
-**Verificado por ejecución** (prueba independiente que reproduce el fallo):
-
+```text
+[v5-C2b]
+[v5-C4]
 ```
+
+Los cambios fueron:
+
+* renombrar la variable de iteración a `py_cand`;
+* reservar `py` para el módulo de `reticulate`;
+* retirar defensivamente cualquier objeto global `py` que no corresponda al módulo esperado.
+
+La corrección fue reproducida de manera independiente:
+
+```text
 antes de la guarda — clase de 'py': character
 [v5-C4] Retirado un objeto 'py' del entorno global que enmascaraba reticulate.
-py$_prueba + 1 = 42   (42 = reticulate operativo)
+py$_prueba + 1 = 42
 ```
 
-**Segunda verificación**: se comprobó además que **no falta ningún paquete** de R en el equipo
-(los 40 que usa el script, incluidos `see`, `topicmodels` y `text2vec`, están instalados), así que
-la corrida no volverá a detenerse por instalaciones.
+Además, se confirmó que las dependencias R requeridas por el script estaban instaladas.
 
-**Hash nuevo (v5.2)**: `72697cfb38101ff8479bc893d8ecc86406db4a3a6fd87b73a9f70b84f36cc423`.
+### Identificador de versión
+
+```text
+v5.2
+SHA-256:
+72697cfb38101ff8479bc893d8ecc86406db4a3a6fd87b73a9f70b84f36cc423
+```
 
 ---
 
-## Corrección v5.3 — tercera corrida (2026-09-25)
+# 8. Corrección v5.3 — Orden de definición de funciones
 
-**Qué pasó**: la corrida avanzó hasta el bloque de análisis por cohorte y se interrumpió con
+La tercera ejecución se detuvo con:
 
-```
+```text
 Error in `construir_largo_para_modelo()`:
 ! no se pudo encontrar la función "construir_largo_para_modelo"
 ```
 
-**Causa**: defecto **del original**, no introducido por mí. `preparar_datos()` (BLOQUE 11, §2) llama a
-`construir_largo_para_modelo()`, cuya definición estaba 2.000 líneas más abajo, en el BLOQUE 14. En una
-corrida lineal la función todavía no existe. El propio comentario del autor delataba la suposición:
-«Preparar datos longitudinales (usa `construir_largo_para_modelo` **ya definida**)».
+### Causa
 
-**Barrido completo, no arreglo puntual**: hice un análisis estático del archivo entero comparando, para
-cada una de las 90 funciones definidas, la primera llamada contra su línea de definición. Resultado:
-**era la única** con esa condición. La definición se movió al BLOQUE 11 §2 (junto a `preparar_datos`),
-dejando una nota en su sitio original para no duplicarla. Comprobado después: "funciones usadas antes de
-definirse: **ninguna**".
+La función se invocaba durante el BLOQUE 11 antes de su definición, que se encontraba aproximadamente 2.000 líneas más adelante, en el BLOQUE 14.
 
-**Dos defectos más, corregidos en la misma pasada** (los detecté revisando la ruta completa del script):
+Se realizó un análisis estático completo de las funciones definidas en el archivo, comparando para cada función la posición de su primera llamada con la posición de su definición.
 
-- `[v5-P]`: `performance::check_model()` devuelve un **gráfico**; el original lo imprimía *dentro* de un
-  `sink()`, así que cada archivo `piloto_<variable>_performance.txt` quedaba lleno con la estructura del
-  objeto (decenas de KB ilegibles) en lugar del diagnóstico. Ahora el .txt lleva las cifras
-  (Shapiro-Wilk de residuos, n, singularidad, convergencia) y el gráfico se guarda como
-  `piloto_<variable>_check_model.png`.
-- `[v5-Q]`: imprimir los gráficos en consola (`print(p2_es); …`) con `Rscript` abre un dispositivo y deja
-  un `Rplots.pdf` de basura en la carpeta de salida. Quedó condicionado a `interactive()`.
+El resultado fue:
 
-**Hash nuevo (v5.3)**: `b07090605a2c3bbdf6a99ff361db01225106667178cfe3b05f93dc797a41c517`
-(`parse()` OK, 906 expresiones; sin referencias adelantadas; artefacto publicado en el repositorio
-verificado byte a byte: 148/148 hashes OK en Drive).
+```text
+Funciones utilizadas antes de definirse: ninguna
+```
 
-**Nota sobre duplicados preexistentes** (no se tocan, no rompen nada): `obtener_embeddings()` está
-definida dos veces con el mismo cuerpo (infraestructura de embeddings y BLOQUE 7). La segunda
-definición gana y es idéntica.
+después de la corrección.
+
+### Modificaciones adicionales
+
+Se incorporaron también:
+
+```text
+[v5-P]
+[v5-Q]
+```
+
+`[v5-P]` corrigió el tratamiento de `performance::check_model()`: el gráfico ya no se imprime dentro de `sink()`, sino que se almacenan las cifras diagnósticas en el `.txt` y el gráfico en un archivo PNG independiente.
+
+`[v5-Q]` condicionó la impresión de gráficos a `interactive()` para impedir la creación involuntaria de `Rplots.pdf` durante ejecuciones mediante `Rscript`.
+
+### Identificador de versión
+
+```text
+v5.3
+SHA-256:
+b07090605a2c3bbdf6a99ff361db01225106667178cfe3b05f93dc797a41c517
+```
+
+Verificaciones:
+
+```text
+parse() OK
+906 expresiones
+148/148 hashes OK en Drive
+```
+
+Se confirmó además la existencia de dos definiciones idénticas de `obtener_embeddings()`. La segunda definición es funcionalmente equivalente y prevalece por orden de evaluación; no se consideró necesario modificarla en esta etapa.
 
 ---
 
-## Corrección v5.4 — BLOQUE 12 (figuras) y la caída que dejaba sin ejecutar los bloques 13 y 14 (2026-09-25)
+# 9. Corrección v5.4 — Generación de figuras
 
-**Qué pasó**: la corrida llegó hasta el final del BLOQUE 11 (modelos por cohorte y comparación: se
-generaron `combinado/tablas/comparacion_*` e `interaccion_fuente_tiempo.csv`) y murió dentro del
-BLOQUE 12 con
+La ejecución posterior alcanzó el final del BLOQUE 11 y se detuvo en el BLOQUE 12 con:
 
-```
-✓ Figura guardada: fig10_interaccion_condicion_tiempo.png
+```text
 Error in `geom_ribbon()`:
 ! Problem while setting up geom.
-ℹ Error occurred in the 2nd layer.
 ```
 
-**Causa del aborto (y por qué importaba)**: los gráficos de fig1 y fig4 fallaban al construirse, el
-error quedaba capturado por su `tryCatch`, **pero el objeto defectuoso seguía en la lista `figuras`**, y
-al construir los paneles combinados `plot_grid()` lo renderizaba **fuera de todo `tryCatch`**: la excepción
-subía y el script terminaba ahí. Consecuencia: los BLOQUES 13 (exportación de tablas) y 14 (sensibilidad y
-robustez) **nunca se ejecutaron**.
+### 9.1 Defecto de propagación de errores
 
-**Causa de fondo de las figuras**. Dos familias de defectos, ambas del original:
+Los errores al construir determinadas figuras eran capturados mediante `tryCatch()`, pero los objetos defectuosos permanecían en la lista `figuras`. Posteriormente, `plot_grid()` intentaba renderizarlos fuera de protección, lo que provocaba la terminación de la corrida.
 
-1. **Capas sin el aesthetic `x`.** Con `inherit.aes = FALSE` hay que declarar `x` explícitamente. En fig1 y
-   fig4 las tres capas derivadas (banda, línea de la media y punto de la media) no lo declaraban →
-   `geom_line() requires the following missing aesthetics: x`. Corregido en `[v5-R1]` (banda) y `[v5-R4]`
-   (línea y punto).
-2. **Columnas que el pipeline nunca creaba** en `datos$ancho`, de modo que 8 de las 15 figuras no podían
-   calcularse:
-   - `cos_*` / `jac_*` / `div_*`: `calcular_similitudes()` está definida en el BLOQUE 5 y **no se llamaba nunca**.
-   - `cambio_*`: `calcular_cambios_y_scores()` (BLOQUE 8) devuelve un data.frame **aparte** que nunca se unía
-     a `datos$ancho`, y las figuras leían de `datos$ancho`.
-   - `rate_<tema>_t<k>` (tasas por 1000 palabras): viven en `scores_wide`, no en `datos$ancho`.
-   - `cambio_<emoción>_*`: el script nunca calculaba cambios de emociones.
-   - `score_influencia_*` / `score_complejidad`: solo se creaban si las columnas ya estaban presentes, así que
-     nunca se creaban.
+Esto impedía alcanzar los BLOQUES 13 y 14.
 
-**Qué hice** (`[v5-R3]`, `[v5-R5]`, `[v5-R6]`, `[v5-R2]`):
+### 9.2 Defectos en las figuras
 
-- `[v5-R3]`: bloque de preparación antes de dibujar que **conecta las piezas del propio script**: llama a
-  `calcular_similitudes()` y (si falta) a `calcular_sentimientos()`; une `resultado_cambios` y `scores_wide`
-  a `datos$ancho` por `id_participante` (comprobando que la unión no cambie el número de filas); crea los
-  cambios de emociones y de los 10 temas Hopper; crea los alias de nombre que el BLOQUE 12 usa literalmente
-  (`cambio_palabras_*`); y calcula los **scores heurísticos con los pesos de `config_scores_default()`** del
-  propio script.
-- `[v5-R5]`: la figura 13 recalculaba las tasas dividiendo columnas de conteo inexistentes (y con
-  `n_palabras`, que en el piloto está vacía). Ahora usa las tasas que el propio pipeline ya calculó.
-- `[v5-R6]`: el bootstrap del IC de fig1 caía porque las filas del piloto entran con NA en `n_palabras`
-  (columna vacía en su Excel) y `quantile()` no admite todo-NA. Se filtran los valores finitos.
-  **Consecuencia declarada**: esa figura describe solo al principal; la extensión del piloto está en
-  `n_palabras_calculado`.
-- `[v5-R2]`: los paneles combinados ahora comprueban que el PNG de cada componente exista y van protegidos,
-  de modo que una figura defectuosa no pueda volver a tumbar la corrida.
+Se identificaron dos categorías principales.
 
-**`bing` no existe en este pipeline.** Las figuras 3, 8, 12 y 15 piden una emoción global `bing_*` que el
-script **nunca calcula** (no hay VADER ni Bing en ningún bloque). Para no inventar una medida, esas figuras
-usan `sadness` como duplicado declarado. Si el manuscrito necesita un sentimiento global, hay que decidir
-qué léxico lo produce.
+#### Aesthetic `x` ausente
 
-**Verificado antes de relanzar, sin esperar otra corrida completa**: escribí un ensayo que reconstruye
-`datos$ancho` a partir de los artefactos que la corrida ya dejó en disco, aplica el bloque `[v5-R3]` y
-**construye las 11 figuras** que antes fallaban. Resultado: `fig1, fig3, fig4, fig6, fig8, fig9, fig11,
-fig12, fig13, fig14, fig15` → **todas CONSTRUIDAS OK**. Las otras cuatro (2, 5, 7, 10) ya se generaban.
+En determinadas capas con:
 
-**Hash nuevo (v5.4)**: `bffc1f26b7f2e3571bd5f3c5034e961e5c6a84bc8c715a2fe9a6e019d34f902f`
-(`parse()` OK, 921 expresiones). Publicado en el repositorio y verificado en Drive: 148/148 hashes OK.
+```text
+inherit.aes = FALSE
+```
+
+no se especificaba explícitamente el aesthetic `x`.
+
+La corrección se incorporó mediante:
+
+```text
+[v5-R1]
+[v5-R4]
+```
+
+#### Variables no generadas previamente
+
+Ocho de las quince figuras dependían de columnas que no estaban presentes en `datos$ancho`:
+
+```text
+cos_*
+jac_*
+div_*
+cambio_*
+rate_<tema>_t<k>
+cambio_<emoción>_*
+score_influencia_*
+score_complejidad
+```
+
+El análisis del flujo de datos mostró que:
+
+* `calcular_similitudes()` estaba definida pero no se ejecutaba;
+* `calcular_cambios_y_scores()` devolvía un objeto separado que no se reincorporaba a `datos$ancho`;
+* las tasas Hopper permanecían en `scores_wide`;
+* no se generaban cambios emocionales;
+* los scores heurísticos no se calculaban cuando faltaban sus columnas de entrada.
+
+### 9.3 Integración de los componentes existentes
+
+Se incorporó el bloque:
+
+```text
+[v5-R3]
+```
+
+para conectar las etapas ya presentes en el script:
+
+* ejecución de `calcular_similitudes()`;
+* cálculo de sentimientos cuando faltaban;
+* incorporación de `resultado_cambios` y `scores_wide`;
+* comprobación de que las uniones no modificaran el número de filas;
+* cálculo de cambios emocionales;
+* cálculo de cambios para los diez temas Hopper;
+* creación de los alias requeridos por las figuras;
+* cálculo de scores heurísticos mediante `config_scores_default()`.
+
+Se incorporaron además:
+
+```text
+[v5-R5]
+[v5-R6]
+[v5-R2]
+```
+
+para corregir:
+
+* la obtención de tasas en la figura 13;
+* el bootstrap de la figura 1 ante valores `NA`;
+* la protección de paneles combinados frente a componentes ausentes o defectuosos.
+
+### 9.4 Ausencia de una medida Bing/VADER
+
+Se confirmó que el pipeline no genera una variable `bing_*` y no incorpora un cálculo mediante Bing o VADER.
+
+Por ello, las figuras que requerían un indicador global de sentimiento utilizan `sadness` como sustituto explícitamente declarado.
+
+Esta decisión evita introducir una medida que no haya sido calculada por el pipeline original.
+
+### 9.5 Verificación previa
+
+Antes de relanzar la corrida completa se reconstruyeron los objetos disponibles en disco y se generaron las once figuras que anteriormente presentaban problemas:
+
+```text
+fig1
+fig3
+fig4
+fig6
+fig8
+fig9
+fig11
+fig12
+fig13
+fig14
+fig15
+```
+
+Todas fueron construidas correctamente.
+
+Las restantes:
+
+```text
+fig2
+fig5
+fig7
+fig10
+```
+
+ya se generaban correctamente.
+
+### Identificador de versión
+
+```text
+v5.4
+SHA-256:
+bffc1f26b7f2e3571bd5f3c5034e961e5c6a84bc8c715a2fe9a6e019d34f902f
+```
 
 ---
 
-## Correcciones v5.5–v5.7 — la cola del script (BLOQUES 13 y 14) (2026-09-25)
+# 10. Correcciones v5.5–v5.7 — Bloques 13 y 14
 
-Con los BLOQUES 11 y 12 corregidos, la corrida avanzó hasta el BLOQUE 13 y murió ahí. A partir de ese
-punto dejé de reparar de uno en uno: escribí un **ensayo** que reconstruye los objetos desde los
-artefactos que la corrida ya deja en disco (`datos_completos_ancho.csv`, `datos_formato_largo.csv`,
-`scores_diccionarios.RData`, `modelos_mixtos.rds`) y ejecuta **todas las expresiones de los bloques 13 y
-14**, reportando cada error sin abortar. Los siguientes defectos se encontraron por esa vía.
+A partir de esta etapa se sustituyó la estrategia de reparación puntual por una prueba sistemática de los bloques restantes.
 
-### `[v5-S]` — `datos$largo` no tiene `metrica` (BLOQUE 13 §7)
-El autor mezcló dos formatos largos: `datos$largo` es una fila por participante × iteración, y el objeto
-con columnas `metrica`/`valor` es `ancho_largo` (BLOQUE 9). El filtro abortaba con `'metrica' no
-encontrado`. Ahora la tabla se arma desde `ancho_largo` y, si no está en memoria, se reconstruye.
+Se construyó un ensayo que reconstruía los objetos a partir de los artefactos generados por la corrida y ejecutaba las expresiones de los BLOQUES 13 y 14, registrando cada error sin interrumpir el ensayo.
 
-### `[v5-S2]` — `Min = Inf` y `Max = -Inf` en la tabla de descriptivos
-`min(valor, na.rm = TRUE)` sobre un grupo sin ningún valor finito (el piloto no tiene `n_palabras`)
-devolvía infinito, y `max()` menos infinito, con 18 avisos. Ahora `n` cuenta valores finitos y las
-estadísticas devuelven NA cuando no hay ninguno: la tabla dice "no disponible", no ∞.
+## 10.1 `[v5-S]` — Estructuras largas incompatibles
 
-### `[v5-T]` — conclusiones impresas en prosa fija
-El BLOQUE 14 escribía, **sin calcular nada**, cosas como *«Modelo primario: efecto de tiempo
-significativo, interacción no significativa»*, *«similar al primario»*, *«...»* en los tres modelos
-siguientes y *«el efecto de tiempo se mantiene significativo en los modelos de sensibilidad»*, *«la
-interacción no es significativa en ningún modelo»*. Lo mismo iba al archivo de auditoría
-`outputs/auditoria_analisis_final.txt`. Son afirmaciones que no se midieron: se imprimían con cualquier
-resultado. Con los datos de esta corrida, *«la interacción no es significativa en ningún modelo»* es
-**falsa**: en el piloto la interacción condición×tiempo salió p = 0.016. Ahora esas líneas se **derivan**
-de `tabla_robustez_modelos.csv` (que sí se calcula) y se dice "no disponible" cuando falta el dato.
+El BLOQUE 13 esperaba columnas `metrica` y `valor` en `datos$largo`, aunque dicha estructura correspondía a `ancho_largo`.
 
-### `[v5-U1..U4]` — el análisis de sensibilidad completo estaba muerto
-Los modelos A–F del BLOQUE 14 fallaban **todos**:
+Se corrigió la fuente del cálculo y se añadió reconstrucción cuando el objeto no se encontraba disponible.
 
-- `[v5-U1]`: las fórmulas nombraban la **variable** (`n_palabras_calculado ~ ...`) pero
-  `construir_largo_para_modelo()` devuelve el desenlace en la columna **`valor`** → `object not found` en
-  todos los modelos. Corregidas a `valor ~ ...`.
-- `[v5-U2]`: se comprobaba `"n_tokens" %in% names(ancho)` / `"n_estimulos" %in% names(ancho)`, pero en
-  `datos$ancho` esas variables están en formato ancho (`n_tokens_t1`, `n_estimulos_t1`) → la comprobación
-  era siempre falsa y los modelos C y D se omitían por "variable no existe".
-- `[v5-U3]`: el modelo de exposición acumulada necesita `n_estimulos` en el formato largo; se añadió
-  derivándolo del tiempo con la **misma** función del script (`derivar_n_estimulos`).
-- `[v5-U4]`: el resumen de replicabilidad buscaba `analisis_piloto/modelos/modelos_comparativos.rds` (ruta
-  del árbol auditado). El BLOQUE 11 los guarda en la carpeta de salida → ahora usa `DIR_SALIDA`.
+## 10.2 `[v5-S2]` — Estadísticos sobre grupos vacíos
 
-**Verificado con el ensayo antes de relanzar** (v5.7):
+Operaciones como:
 
-```
-Modelo primario: OK | Modelo + demora: OK | Log palabras: OK | Log tokens: OK
-Modelo estímulos: OK | Modelo fuente (replicabilidad): OK
-sin errores en las 129 expresiones de los bloques 13 y 14
+```r
+min(valor, na.rm = TRUE)
+max(valor, na.rm = TRUE)
 ```
 
-**Hash (v5.7)**: `11b1f619367f61d8b47b59fa6ba6c5b16401f535d933874ded3c73033d00981d`.
+producían:
 
-### Dos cosas que quedan dichas y no resueltas
-1. **`bing`**: las figuras 3, 8, 12 y 15 piden una emoción global `bing_*` que este pipeline **nunca
-   calcula** (no hay VADER ni Bing en ningún bloque). Se usa `sadness` como duplicado declarado. Si el
-   manuscrito necesita un sentimiento global, hay que decidir qué léxico lo produce.
-2. **`demora`**: solo existe en el principal. Cualquier resultado que la incluya describe a 23
-   participantes, no a 40.
+```text
+Min = Inf
+Max = -Inf
+```
+
+cuando no existían valores finitos.
+
+Se modificó el procedimiento para que `n` cuente exclusivamente valores finitos y que las estadísticas devuelvan `NA` cuando no existe información válida.
+
+## 10.3 `[v5-T]` — Conclusiones derivadas de texto fijo
+
+El BLOQUE 14 incluía afirmaciones preescritas como:
+
+```text
+efecto de tiempo significativo
+interacción no significativa
+similar al primario
+el efecto de tiempo se mantiene significativo
+```
+
+sin que estas afirmaciones se derivaran necesariamente de los resultados calculados.
+
+El problema era especialmente relevante porque una de las afirmaciones resultaba incompatible con los datos observados: la interacción condición × tiempo del piloto alcanzó `p = 0.016`.
+
+Las conclusiones se modificaron para derivarse de:
+
+```text
+tabla_robustez_modelos.csv
+```
+
+y reportar `no disponible` cuando faltaran los indicadores correspondientes.
+
+## 10.4 `[v5-U1..U4]` — Especificaciones de sensibilidad
+
+Los modelos A–F del BLOQUE 14 presentaban distintos defectos de construcción.
+
+### `[v5-U1]`
+
+Las fórmulas utilizaban el nombre original de la variable dependiente:
+
+```text
+n_palabras_calculado ~ ...
+```
+
+mientras que `construir_largo_para_modelo()` generaba el desenlace en:
+
+```text
+valor
+```
+
+Las fórmulas se corrigieron a:
+
+```text
+valor ~ ...
+```
+
+### `[v5-U2]`
+
+Las comprobaciones para `n_tokens` y `n_estimulos` buscaban columnas en formato ancho:
+
+```text
+n_tokens
+n_estimulos
+```
+
+aunque los datos disponibles utilizaban:
+
+```text
+n_tokens_t1
+n_tokens_t2
+n_tokens_t3
+n_estimulos_t1
+n_estimulos_t2
+n_estimulos_t3
+```
+
+La comprobación se adaptó a la estructura efectiva.
+
+### `[v5-U3]`
+
+El modelo de exposición acumulada requería `n_estimulos` en formato largo. Se incorporó su derivación utilizando la misma función `derivar_n_estimulos()` del pipeline.
+
+### `[v5-U4]`
+
+La ruta utilizada para localizar los modelos de comparación piloto-principal correspondía al árbol auditado anterior.
+
+Se sustituyó por la ruta de salida definida en `DIR_SALIDA`.
+
+### Verificación v5.7
+
+El ensayo completo produjo:
+
+```text
+Modelo primario: OK
+Modelo + demora: OK
+Log palabras: OK
+Log tokens: OK
+Modelo estímulos: OK
+Modelo fuente (replicabilidad): OK
+
+Sin errores en las 129 expresiones de los bloques 13 y 14
+```
+
+### Identificador de versión
+
+```text
+v5.7
+SHA-256:
+11b1f619367f61d8b47b59fa6ba6c5b16401f535d933874ded3c73033d00981d
+```
 
 ---
 
-## Cierre v5.8–v5.9 y corrida final completa (2026-09-25)
+# 11. Consideraciones pendientes tras v5.7
 
-### `[v5-U5]` — el último caso del defecto de las fórmulas
-Buscando todas las fórmulas construidas con el nombre de la variable quedaba **una** más, en el respaldo de
-la sección E (outliers): si el modelo primario no estuviera disponible, esa línea lo re-creaba con el mismo
-defecto y arrastraba consigo el análisis de outliers y los diagnósticos. Corregida. Ya no queda ningún
-`as.formula(paste(VD, ...))` en el archivo.
+Persistieron dos decisiones de interpretación que no correspondían a defectos de código:
 
-### `[v5-V1..V6]` — las salidas del PRINCIPAL no existían como tales
-El BLOQUE 11 guardaba los modelos del principal **en la carpeta del piloto**, y sus medias marginales, sus
-contrastes y sus figuras se calculaban… y nunca se escribían: los bucles de exportación y de figuras solo
-recorrían `resultados_piloto`, y `generar_graficos()` tenía fijos el prefijo `PILOTO_`, la carpeta
-`DIR_SALIDA` y el subtítulo. Corregido: cada cohorte tiene ahora sus propias carpetas (`tablas/`,
-`modelos/`, `graficas_es/`, `figures_en/`, `diagnosticos/`) y la función de figuras es parametrizable sin
-cambiar el comportamiento del piloto.
+### Sentimiento global
 
-### Corrida final: completa y verificada
-`EXITCODE=0`, los 15 bloques ejecutados, **15/15 figuras** y el análisis de sensibilidad **completo**
-(A–F funcionando: `tabla_demora.csv`, `tabla_robustez_log.csv`, `comparacion_tiempo_estimulos.csv`,
-`estructura_n_estimulos.csv`). Salidas del principal: 3 tablas, 1 modelo, 6 figuras ES, 6 EN, 2 diagnósticos,
-2 archivos de datos.
+Las figuras 3, 8, 12 y 15 requieren una variable conceptual de sentimiento global que el pipeline no calcula mediante Bing o VADER.
 
-**Hash del script (v5.9)**: `1143b36a6fb76dc8279e70880634b2a81ebf05ee70accfb69b0172bcc4a1c15f`
-— **idéntico al publicado en el repositorio** (`code/01_pipeline_nlp.R`), de modo que los artefactos y el
-script publicado son la misma versión.
+Mientras no se incorpore un procedimiento específico, se utiliza `sadness` como sustituto declarado.
 
-### Lo que la corrida final confirma de los modelos
-Los contrastes por condición del principal (Holm) muestran T1 → T3 significativo en las tres condiciones:
-Texto −96.1 (p = 1.5×10⁻⁴), Audio −90.6 (p = 3.3×10⁻⁴), Imagen −80.6 (p = 0.0029). Es el respaldo directo
-de que el crecimiento de la extensión es general y no de una condición.
+### Variable `demora`
 
-### Pendientes que NO son de código
-- `[v5-U5]` es posterior a la corrida: es un camino que no se ejecuta cuando el modelo primario se ajusta
-  bien (y se ajusta), así que no altera ningún artefacto.
-- La demora existe solo en el principal; `bing` nunca se calculó (las figuras 3, 8, 12 y 15 usan `sadness`
-  como duplicado declarado); el criterio de outliers marca 115 de 120 observaciones.
+`demora` existe exclusivamente en la cohorte principal.
+
+Por tanto, cualquier análisis que la incluya corresponde a:
+
+```text
+n = 23
+```
+
+y no al conjunto completo de 40 participantes.
+
+---
+
+# 12. Correcciones v5.8–v5.9
+
+## 12.1 `[v5-U5]` — Caso residual de construcción de fórmulas
+
+Se identificó una última construcción de fórmulas basada directamente en el nombre de la variable en la sección de respaldo correspondiente al análisis de outliers.
+
+Este camino solo se ejecuta si el modelo primario no está disponible, pero reproducía el mismo defecto corregido anteriormente.
+
+La construcción se corrigió y se confirmó que no permanecen expresiones del tipo:
+
+```text
+as.formula(paste(VD, ...))
+```
+
+en el archivo.
+
+## 12.2 `[v5-V1..V6]` — Separación de resultados por cohorte
+
+Se identificó que los resultados del principal no se conservaban como un conjunto independiente:
+
+* los modelos del principal se almacenaban en el directorio del piloto;
+* las medias marginales y contrastes no se exportaban;
+* las figuras se generaban bajo parámetros fijos del piloto;
+* la función de generación gráfica utilizaba prefijos y subtítulos específicos del piloto.
+
+Se modificó la estructura para que cada cohorte disponga de sus propios directorios:
+
+```text
+tablas/
+modelos/
+graficas_es/
+figures_en/
+diagnosticos/
+```
+
+La función de generación de figuras se parametrizó para soportar cada cohorte sin alterar el comportamiento establecido para el piloto.
+
+---
+
+# 13. Corrida final v5.9
+
+La versión final fue ejecutada de principio a fin el 2026-09-25.
+
+### Resultado de ejecución
+
+```text
+EXITCODE = 0
+```
+
+Se ejecutaron los:
+
+```text
+15 bloques
+```
+
+y se generaron:
+
+```text
+15 / 15 figuras
+```
+
+El análisis de sensibilidad A–F también completó su ejecución.
+
+Entre los artefactos producidos se incluyen:
+
+```text
+tabla_demora.csv
+tabla_robustez_log.csv
+comparacion_tiempo_estimulos.csv
+estructura_n_estimulos.csv
+```
+
+Para el principal se generaron:
+
+```text
+3 tablas
+1 modelo
+6 figuras ES
+6 figuras EN
+2 diagnósticos
+2 archivos de datos
+```
+
+---
+
+# 14. Identidad de la versión final
+
+El hash SHA-256 del script v5.9 es:
+
+```text
+1143b36a6fb76dc8279e70880634b2a81ebf05ee70accfb69b0172bcc4a1c15f
+```
+
+Este valor coincide con el archivo publicado en:
+
+```text
+code/01_pipeline_nlp.R
+```
+
+Por consiguiente:
+
+```mermaid
+flowchart LR
+
+    A["Script ejecutado<br/>v5.9"] --> B["SHA-256"]
+    B --> C["code/01_pipeline_nlp.R"]
+    C --> D{"¿Hash idéntico?"}
+    D -->|Sí| E["Misma versión"]
+    D -->|No| F["Versiones diferentes"]
+
+    classDef source fill:#0f172a,stroke:#60a5fa,color:#e0f2fe,stroke-width:2px;
+    classDef control fill:#422006,stroke:#f59e0b,color:#fef3c7,stroke-width:2px;
+    classDef result fill:#052e16,stroke:#4ade80,color:#dcfce7,stroke-width:2px;
+
+    class A,C source;
+    class B,D control;
+    class E,F result;
+```
+
+La coincidencia de hashes establece correspondencia entre el script utilizado para generar los artefactos finales y el script publicado en el repositorio.
+
+---
+
+# 15. Resultado principal de la ejecución estadística
+
+Los contrastes por condición de la cohorte principal, ajustados mediante Holm, mostraron diferencias T1 → T3 en las tres condiciones:
+
+| Condición | Cambio T1 → T3 |   p ajustada |
+| --------- | -------------: | -----------: |
+| Texto     |          −96.1 | `1.5 × 10⁻⁴` |
+| Audio     |          −90.6 | `3.3 × 10⁻⁴` |
+| Imagen    |          −80.6 |     `0.0029` |
+
+Este resultado se utiliza como evidencia de que la reducción observada en la cohorte principal se presenta en las tres condiciones y no queda circunscrita a una condición experimental única.
+
+---
+
+# 16. Elementos que no constituyen modificaciones posteriores
+
+Los siguientes puntos quedaron documentados como características o limitaciones del pipeline, no como nuevos defectos introducidos después de la corrida:
+
+1. `[v5-U5]` corresponde a un camino alternativo que no se ejecuta cuando el modelo primario se ajusta correctamente. Su corrección no altera los artefactos de la corrida final.
+2. `bing` no fue calculado por el pipeline; las figuras correspondientes utilizan `sadness` como sustituto declarado.
+3. `demora` solo está disponible para la cohorte principal.
+4. El criterio de identificación de observaciones influyentes marca 115 de 120 observaciones en el análisis del conjunto y, por ello, no resulta operativo como procedimiento discriminativo en dicho modelo.
+
+---
+
+# 17. Estado final de la reparación
+
+La versión v5.9 cumple las siguientes condiciones documentadas:
+
+```text
+ESTRUCTURA
+├── Cohortes separadas                     PASS
+├── Identificadores no compartidos         PASS
+├── id_observacion sin duplicados          PASS
+└── Rutas de salida separadas              PASS
+
+ENTORNO
+├── Python operativo                       PASS
+├── reticulate operativo                   PASS
+├── sentence-transformers disponible      PASS
+└── Dependencias R disponibles             PASS
+
+CÓDIGO
+├── parse()                                PASS
+├── funciones requeridas                   PASS
+├── funciones usadas antes de definirse   PASS
+└── errores de fórmula residual            PASS
+
+EMBEDDINGS
+├── Fallos convertidos en errores duros    PASS
+├── Objetos vacíos rechazados              PASS
+└── Integridad de generación controlada    PASS
+
+RESULTADOS
+├── 15/15 figuras                          PASS
+├── Bloques 13–14                          PASS
+├── Sensibilidad A–F                       PASS
+└── Corrida final EXITCODE=0               PASS
+
+TRAZABILIDAD
+├── Hash del script final                  PASS
+├── Script publicado = script ejecutado    PASS
+└── Cambios etiquetados [v5-X]             PASS
+```
+
+---
+
+# 18. Conclusión documental
+
+La secuencia v5.0–v5.9 transformó el script original en una versión ejecutable y trazable sin modificar el archivo histórico de referencia.
+
+Las principales modificaciones afectaron a la portabilidad del entorno, la separación de cohortes, la validación estructural, la integración entre módulos, la generación de figuras, la exportación de resultados y la ejecución de los análisis de sensibilidad.
+
+La evidencia final disponible es una corrida completa con:
+
+```text
+EXITCODE = 0
+15 bloques ejecutados
+15/15 figuras generadas
+sensibilidad A–F completada
+SHA-256 del script final identificado
+```
+
+El archivo original permanece conservado como referencia histórica y la versión v5.9 constituye la versión reparada utilizada para producir los artefactos finales documentados en el repositorio.

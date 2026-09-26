@@ -1,64 +1,89 @@
-﻿
-PCA R → Python: documentación técnica de migración y validación
+# PCA R → Python: documentación técnica de migración y validación
 
-Proyecto: experimento-nlp
-Fecha de auditoría: 2026-09-07
-Estado: PASS
-Tipo de documento: especificación técnica y auditoría de equivalencia numérica
+**Proyecto:** `experimento-nlp`
+**Fecha de auditoría:** 2026-09-07
+**Estado:** **PASS**
+**Tipo de documento:** Especificación técnica y validación de equivalencia numérica
 
-1. Propósito
+---
 
-Este documento formaliza la migración de la etapa de embeddings y análisis de componentes principales (PCA) desde el pipeline original en R hacia Python.
+## 1. Propósito
 
-El objetivo no es sustituir retrospectivamente los resultados originales, sino demostrar que Python puede reproducirlos de manera numéricamente equivalente y establecer una representación operacional controlada.
+Este documento formaliza la migración de la etapa de embeddings y análisis de componentes principales (PCA) desde la implementación original en R hacia una implementación operacional en Python.
+
+El objetivo de la migración no es sustituir retrospectivamente los resultados generados por R, sino demostrar que el procedimiento puede reconstruirse en Python con equivalencia numérica dentro de tolerancias explícitamente definidas y establecer una representación operacional reducida para usos posteriores.
 
 La jerarquía de procedencia es:
 
-R original
-   ↓
-artefactos RDS
-   ↓
-exportaciones CSV
-   ↓
-reconstrucción Python
-   ↓
-validación numérica
-   ↓
-artefacto PCA operacional
+```text
+Implementación R original
+        ↓
+Artefactos RDS preservados
+        ↓
+Exportaciones tabulares
+        ↓
+Reconstrucción en Python
+        ↓
+Validación numérica
+        ↓
+PCA operacional
+```
 
-El PCA original de R permanece preservado.
+El objeto PCA original de R permanece preservado y constituye la referencia primaria de esta validación.
 
-2. Artefactos de entrada
-2.1 Embeddings
+---
 
-Los tres conjuntos temporales tienen dimensión:
+# 2. Artefactos de entrada
 
-$$ 40 \times 384 $$
+## 2.1 Embeddings
+
+Los tres conjuntos temporales presentan las siguientes dimensiones:
+
+$$
+40 \times 384
+$$
 
 Por tanto:
 
-$$ X_{T1},X_{T2},X_{T3}\in\mathbb{R}^{40\times384} $$
+$$
+X_{T1},X_{T2},X_{T3}\in\mathbb{R}^{40\times384}
+$$
 
-Cada fila representa un embedding semántico de 384 dimensiones.
+Cada fila representa una observación y cada columna una dimensión de la representación vectorial.
 
-2.2 Prototipos semánticos
+```text
+T1 = 40 × 384
+T2 = 40 × 384
+T3 = 40 × 384
+```
+
+---
+
+## 2.2 Prototipos semánticos
 
 Se dispone de:
 
-$$ 20 $$
+$$
+20
+$$
 
-prototipos semánticos, cada uno con:
+prototipos semánticos, cada uno representado mediante:
 
-$$ 384 $$
+$$
+384
+$$
 
 dimensiones.
 
-Los prototipos corresponden a categorías semánticas utilizadas por el pipeline original.
+Los prototipos corresponden a las categorías semánticas definidas y utilizadas por el pipeline original.
 
-3. Construcción de la matriz conjunta
+---
 
-El código original en R realiza:
+# 3. Construcción de la matriz conjunta
 
+El procedimiento original en R realiza:
+
+```r
 completos <- complete.cases(emb_t1, emb_t2, emb_t3)
 
 emb_all <- rbind(
@@ -66,437 +91,765 @@ emb_all <- rbind(
   emb_t2[completos, ],
   emb_t3[completos, ]
 )
+```
 
 Se identificaron:
 
-$$ 40 $$
+$$
+40
+$$
 
 casos completos.
 
-Por tanto:
+La matriz conjunta queda definida como:
 
-$$ X= \begin{bmatrix} X_{T1}\\ X_{T2}\\ X_{T3} \end{bmatrix} $$
+$$
+X=
+\begin{bmatrix}
+X_{T1}\\
+X_{T2}\\
+X_{T3}
+\end{bmatrix}
+$$
 
 con:
 
-$$ X\in\mathbb{R}^{120\times384} $$
+$$
+X\in\mathbb{R}^{120\times384}
+$$
 
-El orden de filas es:
+El orden de las observaciones es:
 
-1–40    T1
-41–80   T2
-81–120  T3
+```text
+1–40       → T1
+41–80      → T2
+81–120     → T3
+```
 
-Este orden fue preservado durante la reconstrucción Python.
+Este orden se conservó durante la reconstrucción en Python para permitir la comparación directa de scores y estructuras derivadas.
 
-4. Estandarización
+### Esquema de procedencia de las observaciones
+
+```mermaid
+flowchart TD
+
+    A["Embeddings T1<br/>40 × 384"] --> D["Concatenación"]
+    B["Embeddings T2<br/>40 × 384"] --> D
+    C["Embeddings T3<br/>40 × 384"] --> D
+
+    D --> E["emb_all<br/>120 × 384"]
+
+    E --> F["PCA original en R<br/>prcomp"]
+
+    F --> G["Scores<br/>120 × 120"]
+    F --> H["Loadings / rotation<br/>384 × 120"]
+    F --> I["Sdev<br/>120"]
+    F --> J["Center / Scale<br/>384 + 384"]
+
+    classDef input fill:#0f172a,stroke:#60a5fa,color:#e0f2fe,stroke-width:2px;
+    classDef process fill:#172554,stroke:#38bdf8,color:#dbeafe,stroke-width:2px;
+    classDef output fill:#052e16,stroke:#4ade80,color:#dcfce7,stroke-width:2px;
+
+    class A,B,C input;
+    class D,E,F process;
+    class G,H,I,J output;
+```
+
+---
+
+# 4. Estandarización
 
 La PCA original se calcula mediante:
 
+```r
 prcomp(
     emb_all,
     center = TRUE,
     scale. = TRUE
 )
+```
 
-Para cada variable \(j\):
+Para cada variable \(j\), la transformación de estandarización se expresa como:
 
-$$ Z_{ij} = \frac{X_{ij}-\mu_j}{s_j} $$
+$$
+Z_{ij}=
+\frac{X_{ij}-\mu_j}{s_j}
+$$
 
 donde:
 
-\(X_{ij}\) es el valor original;
-\(\mu_j\) es el centro calculado por R;
-\(s_j\) es el factor de escala calculado por R.
+* \(X_{ij}\) es el valor original;
+* \(\mu_j\) es el centro calculado por R;
+* \(s_j\) es el factor de escala calculado por R.
 
-La migración Python utiliza explícitamente los valores exportados por R:
+La implementación Python utiliza explícitamente los valores exportados desde R:
 
+```text
 pca_embeddings_center.csv
 pca_embeddings_scale.csv
+```
 
-Esto es importante porque evita recalcular parámetros potencialmente diferentes durante la validación.
+Esto evita recalcular independientemente los parámetros de centralización y escala durante la validación.
 
-La matriz resultante es:
+La matriz estandarizada resultante es:
 
-$$ Z\in\mathbb{R}^{120\times384} $$
-5. PCA mediante descomposición en valores singulares
+$$
+Z\in\mathbb{R}^{120\times384}
+$$
 
-Conceptualmente, la PCA puede expresarse mediante la descomposición:
+La secuencia correspondiente es:
 
-$$ Z=U\Sigma V^T $$
+```mermaid
+flowchart LR
 
-donde:
+    A["X<br/>120 × 384"]
+    --> B["Center de R"]
+    --> C["Scale de R"]
+    --> D["Z<br/>120 × 384"]
 
-\(U\) contiene los vectores singulares izquierdos;
-\(\Sigma\) contiene los valores singulares;
-\(V\) contiene los vectores singulares derechos.
+    classDef source fill:#0f172a,stroke:#60a5fa,color:#e0f2fe,stroke-width:2px;
+    classDef process fill:#172554,stroke:#38bdf8,color:#dbeafe,stroke-width:2px;
+    classDef output fill:#052e16,stroke:#4ade80,color:#dcfce7,stroke-width:2px;
 
-Los loadings de PCA corresponden a:
+    class A source;
+    class B,C process;
+    class D output;
+```
 
-$$ V $$
+---
 
-Por tanto:
+# 5. Descomposición de la PCA
 
-$$ \text{loadings}=V $$
+Conceptualmente, la PCA sobre la matriz estandarizada puede expresarse mediante una descomposición en valores singulares:
 
-Los scores se obtienen como:
-
-$$ T=ZV $$
-
-donde:
-
-$$ T\in\mathbb{R}^{120\times120} $$
-
-en la PCA completa.
-
-6. Desviación estándar de los componentes
-
-Los valores sdev de prcomp se relacionan con los valores singulares mediante:
-
-$$ s_k= \frac{\sigma_k}{\sqrt{n-1}} $$
+$$
+Z=U\Sigma V^T
+$$
 
 donde:
 
-$$ n=120 $$
+* \(U\) contiene los vectores singulares izquierdos;
+* \(\Sigma\) contiene los valores singulares;
+* \(V\) contiene los vectores singulares derechos.
 
-Por tanto:
+Bajo la convención utilizada por `prcomp`, la matriz:
 
-$$ s_k= \frac{\sigma_k}{\sqrt{119}} $$
+```text
+pca$rotation
+```
 
-La implementación Python reproduce estos valores dentro de precisión de punto flotante.
+corresponde a la matriz de direcciones principales \(V\), denominada aquí **loadings**.
 
-La diferencia máxima observada fue:
+Los scores se obtienen mediante:
 
-$$ 8.882\times10^{-15} $$
-7. Varianza explicada
+$$
+T=ZV
+$$
 
-La proporción de varianza explicada por el componente \(k\) es:
+por lo que:
 
-$$ VE_k= \frac{s_k^2} {\sum_j s_j^2} $$
+$$
+T\in\mathbb{R}^{120\times120}
+$$
 
-En porcentaje:
+en la solución completa.
 
-$$ VE_k(\%)= 100 \frac{s_k^2} {\sum_j s_j^2} $$
+La relación matemática es:
+
+```mermaid
+flowchart LR
+
+    A["Z<br/>120 × 384"]
+    --> B["SVD<br/>Z = UΣVᵀ"]
+
+    B --> C["V<br/>Loadings"]
+    B --> D["Σ<br/>Valores singulares"]
+
+    A --> E["ZV"]
+    C --> E
+
+    E --> F["Scores<br/>120 × 120"]
+
+    D --> G["Sdev"]
+    G --> H["Varianza explicada"]
+
+    classDef input fill:#0f172a,stroke:#60a5fa,color:#e0f2fe,stroke-width:2px;
+    classDef process fill:#172554,stroke:#38bdf8,color:#dbeafe,stroke-width:2px;
+    classDef output fill:#052e16,stroke:#4ade80,color:#dcfce7,stroke-width:2px;
+
+    class A input;
+    class B,C,D,E process;
+    class F,G,H output;
+```
+
+---
+
+# 6. Desviación estándar de los componentes
+
+Los valores `sdev` de `prcomp` se relacionan con los valores singulares mediante:
+
+$$
+s_k=
+\frac{\sigma_k}{\sqrt{n-1}}
+$$
+
+Con:
+
+$$
+n=120
+$$
+
+se obtiene:
+
+$$
+s_k=
+\frac{\sigma_k}{\sqrt{119}}
+$$
+
+La implementación Python reproduce estos valores dentro de la precisión de punto flotante observada.
+
+La diferencia máxima registrada fue:
+
+$$
+8.882\times10^{-15}
+$$
+
+---
+
+# 7. Varianza explicada
+
+La proporción de varianza explicada por el componente \(k\) se define como:
+
+$$
+VE_k=
+\frac{s_k^2}
+{\sum_j s_j^2}
+$$
+
+y, expresada como porcentaje:
+
+$$
+VE_k(\%)=
+100
+\frac{s_k^2}
+{\sum_j s_j^2}
+$$
 
 La varianza acumulada hasta el componente \(K\) es:
 
-$$ VE_{\text{cum}}(K) = \sum_{k=1}^{K}VE_k $$
-8. Varianza explicada observada
+$$
+VE_{\mathrm{cum}}(K)
+=
+\sum_{k=1}^{K}VE_k
+$$
 
-Los primeros componentes presentan:
+---
 
-PCVarianza %Acumulada %
-112.675012.6750
-27.509020.1840
-36.873127.0571
-45.506832.5639
-55.362037.9258
-64.592342.5181
-74.287346.8054
-84.054150.8594
-93.810154.6695
-103.325157.9946
-201.513678.7197
-300.818489.5191
-400.414994.9821
-500.192497.6911
-600.099799.0474
-700.045699.6850
-800.014499.9309
-900.003099.9937
-94~0.0009~100.0000
+# 8. Varianza explicada observada
 
-Umbrales operativos aproximados:
+Los principales puntos de referencia de la solución observada son:
 
+| Componente | Varianza individual (%) | Varianza acumulada (%) |
+| ---------: | ----------------------: | ---------------------: |
+|        PC1 |                 12.6750 |                12.6750 |
+|        PC2 |                  7.5090 |                20.1840 |
+|        PC3 |                  6.8731 |                27.0571 |
+|        PC4 |                  5.5068 |                32.5639 |
+|        PC5 |                  5.3620 |                37.9258 |
+|        PC6 |                  4.5923 |                42.5181 |
+|        PC7 |                  4.2873 |                46.8054 |
+|        PC8 |                  4.0541 |                50.8594 |
+|        PC9 |                  3.8101 |                54.6695 |
+|       PC10 |                  3.3251 |                57.9946 |
+|       PC20 |                  1.5137 |                78.7197 |
+|       PC30 |                  0.8184 |                89.5191 |
+|       PC40 |                  0.4149 |                94.9821 |
+|       PC50 |                  0.1924 |                97.6911 |
+|       PC60 |                  0.0997 |                99.0474 |
+|       PC70 |                  0.0456 |                99.6850 |
+|       PC80 |                  0.0144 |                99.9309 |
+|       PC90 |                  0.0031 |                99.9937 |
+|       PC94 |                ≈ 0.0009 |               100.0000 |
+
+### Umbrales operativos
+
+```text
 50%  → PC8
 70%  → PC15
 80%  → PC21
 90%  → PC31
 95%  → PC41
 99%  → PC60
+```
 
 El valor calculado para PC60 es:
 
-$$ 99.04740736560767\% $$
-9. Rango numérico
+$$
+99.04740736560767\%
+$$
+
+---
+
+# 9. Rango numérico
 
 La matriz estandarizada presenta:
 
-$$ \operatorname{rank}(Z)=94 $$
+$$
+\operatorname{rank}(Z)=94
+$$
 
-utilizando una tolerancia numérica:
+utilizando una tolerancia numérica de:
 
+```text
 1e-12
-
-La singularidad efectiva aparece después de PC94.
+```
 
 Por tanto:
 
-PC1–PC94    → rango numéricamente identificable
-PC95–PC120  → espacio numéricamente nulo
+```text
+PC1–PC94
+→ rango numéricamente identificable
 
-El valor de sdev máximo observado dentro de PC95–PC120 es aproximadamente:
+PC95–PC120
+→ espacio numéricamente nulo
+```
 
-$$ 1.346\times10^{-15} $$
+El valor máximo de `sdev` observado dentro de PC95–PC120 es aproximadamente:
 
-La varianza relativa asociada a este bloque es:
+$$
+1.346\times10^{-15}
+$$
 
-$$ 2.596\times10^{-32} $$
+La varianza relativa asociada a este bloque es aproximadamente:
 
-Esto confirma que PC95–PC120 no contienen varianza numéricamente relevante.
+$$
+2.596\times10^{-32}
+$$
 
-10. Por qué R y Python pueden diferir después de PC94
+Estas magnitudes justifican la clasificación de PC95–PC120 como **componentes numéricamente nulas** para los fines de esta validación.
 
-Una PCA no determina una base única en un espacio donde los autovalores son cero o prácticamente cero.
+Debe distinguirse entre:
 
-Mientras que los primeros componentes poseen valores singulares claramente distintos de cero, después del rango efectivo las direcciones corresponden a un espacio nulo.
+* **número de componentes del objeto PCA:** 120;
+* **rango numéricamente identificable:** 94;
+* **componentes retenidas operacionalmente:** 60.
 
-En ese espacio:
+No se trata, por tanto, de tres definiciones equivalentes, sino de tres propiedades diferentes de la misma solución.
 
-$$ \lambda_k\approx0 $$
+---
 
-por lo que diferentes implementaciones pueden producir diferentes bases ortonormales sin cambiar la información sustantiva contenida en los datos.
+# 10. Diferencias entre R y Python después de PC94
+
+Una PCA no determina de manera única una base en un subespacio asociado con autovalores exactamente nulos o numéricamente próximos a cero.
+
+En el rango identificable, los componentes presentan valores singulares suficientemente distintos de cero para permitir una comparación componente por componente.
+
+Después de PC94:
+
+$$
+\lambda_k\approx0
+$$
+
+y las direcciones forman un espacio numéricamente degenerado.
+
+En dicho espacio pueden obtenerse distintas bases ortonormales dependiendo de la implementación, del algoritmo de descomposición o de operaciones numéricas intermedias, sin que ello implique una diferencia sustantiva en la información representada.
 
 Por esta razón:
 
+```text
 PC1–PC94
-
-se comparan componente por componente.
-
-En cambio:
+→ comparación componente por componente
 
 PC95–PC120
+→ clasificación como numéricamente nulos
+→ no se exige identidad vectorial individual
+```
 
-se clasifican como numéricamente nulos y no se exige identidad vectorial individual.
+---
 
-11. Indeterminación de signo
+# 11. Indeterminación de signo
 
 Cada componente de PCA presenta una indeterminación de signo.
 
 Si:
 
-$$ v_k $$
+$$
+v_k
+$$
 
-es un vector propio válido, entonces:
+es una dirección principal válida, entonces:
 
-$$ -v_k $$
+$$
+-v_k
+$$
 
 también lo es.
 
-Por tanto:
+Por consiguiente:
 
-$$ v_k \quad\text{y}\quad -v_k $$
+$$
+v_k
+\quad\text{y}\quad
+-v_k
+$$
 
-representan exactamente la misma dirección.
+representan la misma dirección geométrica.
 
-Para comparar R y Python se realizó alineación de signos de los componentes.
+Para permitir la comparación directa entre R y Python se realizó alineación de signos de los componentes.
 
-Esto permite una comparación directa de:
+Esta operación permite distinguir una inversión algebraicamente equivalente de una discrepancia numérica real.
 
-loadings;
-scores.
+La comparación de:
 
-sin interpretar una inversión de signo como una discrepancia sustantiva.
+```text
+loadings
+scores
+```
 
-12. Validación de equivalencia
+se realizó después de dicha alineación.
 
-La validación produjo:
+---
 
-R scores:       (120, 120)
-R rotation:     (384, 120)
-Python scores:  (120, 120)
-Python rotation:(384, 120)
-12.1 Varianza explicada
+# 12. Validación de equivalencia
+
+Las dimensiones de los objetos comparados fueron:
+
+```text
+R scores:        120 × 120
+R rotation:      384 × 120
+
+Python scores:   120 × 120
+Python rotation: 384 × 120
+```
+
+La validación se realizó por componentes y por estructuras derivadas.
+
+## 12.1 Varianza explicada
 
 Diferencia máxima:
 
-$$ 1.665\times10^{-16} $$
+$$
+1.665\times10^{-16}
+$$
 
-Resultado:
+**Resultado:** PASS
 
-PASS
-12.2 SDEV
+---
+
+## 12.2 SDEV
 
 Diferencia máxima:
 
-$$ 8.882\times10^{-15} $$
+$$
+8.882\times10^{-15}
+$$
 
-Resultado:
+**Resultado:** PASS
 
-PASS
-12.3 Loadings
+---
 
-Para PC1–PC94:
-
-$$ \max|\Delta| = 5.185\times10^{-14} $$
-
-Resultado:
-
-PASS
-12.4 Scores
+## 12.3 Loadings
 
 Para PC1–PC94:
 
-$$ \max|\Delta| = 5.241\times10^{-13} $$
+$$
+\max|\Delta|
+=
+5.185\times10^{-14}
+$$
+
+**Resultado:** PASS
+
+---
+
+## 12.4 Scores
+
+Para PC1–PC94:
+
+$$
+\max|\Delta|
+=
+5.241\times10^{-13}
+$$
+
+**Resultado:** PASS
+
+Las diferencias observadas son compatibles con efectos de representación de punto flotante y no constituyen evidencia de divergencia metodológica entre las implementaciones comparadas.
+
+### Resumen gráfico de la validación
+
+```mermaid
+flowchart TD
+
+    A["PCA R original"] --> C["Comparación numérica"]
+    B["PCA Python"] --> C
+
+    C --> D["Explained variance"]
+    C --> E["SDEV"]
+    C --> F["Loadings PC1–PC94"]
+    C --> G["Scores PC1–PC94"]
+
+    D --> H["PASS"]
+    E --> H
+    F --> H
+    G --> H
+
+    H --> I["Equivalencia numérica validada"]
+
+    classDef source fill:#0f172a,stroke:#60a5fa,color:#e0f2fe,stroke-width:2px;
+    classDef check fill:#422006,stroke:#f59e0b,color:#fef3c7,stroke-width:2px;
+    classDef result fill:#052e16,stroke:#4ade80,color:#dcfce7,stroke-width:2px;
+
+    class A,B source;
+    class C,D,E,F,G check;
+    class H,I result;
+```
+
+---
+
+# 13. Integridad de los artefactos RDS
+
+Se realizó una comparación SHA-256 entre los archivos fuente y sus copias organizadas.
 
 Resultado:
 
-PASS
+```text
+OK  embeddings_t1.rds
+OK  embeddings_t2.rds
+OK  embeddings_t3.rds
+OK  prototipos_semanticos.rds
+OK  pca_embeddings.rds
+```
 
-Estos valores son compatibles con diferencias de representación de punto flotante y no indican divergencia metodológica.
+Las copias organizadas son idénticas byte a byte a los archivos fuente correspondientes.
 
-13. Integridad de los artefactos RDS
+La migración no sobrescribió ni modificó los objetos RDS originales.
 
-Se realizó una comparación SHA-256 de los archivos originales y sus copias organizadas.
+La relación de conservación es:
 
-Resultado:
+```mermaid
+flowchart LR
 
-OK embeddings_t1.rds
-OK embeddings_t2.rds
-OK embeddings_t3.rds
-OK prototipos_semanticos.rds
-OK pca_embeddings.rds
+    A["Objeto RDS original"] --> B["SHA-256"]
+    B --> C["Copia organizada"]
+    C --> D["SHA-256"]
+    D --> E{"Hash idéntico"}
 
-Las copias son byte-identical respecto de los originales.
+    E -->|Sí| F["Artefacto preservado"]
+    E -->|No| G["Revisión requerida"]
 
-La migración no sobrescribió los archivos RDS de origen.
+    classDef source fill:#0f172a,stroke:#60a5fa,color:#e0f2fe,stroke-width:2px;
+    classDef check fill:#422006,stroke:#f59e0b,color:#fef3c7,stroke-width:2px;
+    classDef result fill:#052e16,stroke:#4ade80,color:#dcfce7,stroke-width:2px;
 
-14. PCA operacional
+    class A,C source;
+    class B,D,E check;
+    class F,G result;
+```
 
-Aunque la PCA completa contiene 120 componentes, solamente 94 poseen rango numérico efectivo.
+---
 
-Se definió una representación operacional de:
+# 14. Definición de la PCA operacional
 
-$$ K=60 $$
+Aunque el objeto PCA completo contiene 120 componentes, solamente 94 presentan rango numéricamente identificable.
 
-componentes.
+Para la ejecución operacional se estableció:
+
+$$
+K=60
+$$
 
 Por tanto:
 
-$$ T_{\text{operacional}} = T_{[:,1:60]} $$
+$$
+T_{\mathrm{operacional}}
+=
+T_{[:,1:60]}
+$$
 
 con:
 
-$$ VE_{\text{cum}}(60) = 99.047407\% $$
+$$
+VE_{\mathrm{cum}}(60)
+=
+99.047407\%
+$$
 
-Esta decisión tiene tres propiedades:
+Esta representación tiene tres propiedades:
 
-conserva prácticamente toda la varianza;
-evita incorporar componentes numéricamente nulos;
-produce una representación considerablemente menor que 384 dimensiones.
+1. conserva el 99.0474% de la varianza total;
+2. evita incorporar las componentes clasificadas como numéricamente nulas;
+3. reduce la representación de 384 dimensiones a un espacio operacional de 60 componentes.
 
-15. Justificación de PC1–PC60
+La reducción a 60 componentes constituye una decisión operacional específica de este pipeline y no una propiedad necesaria de la PCA.
 
-PC1–PC60 no se presentan como una verdad matemática universal.
+---
 
-Es una decisión operacional basada en:
+# 15. Justificación de la selección PC1–PC60
 
-$$ VE_{\text{cum}}(60)\approx99.05\% $$
+La selección de PC1–PC60 no se establece como un criterio matemático universal.
 
-La selección puede cambiar dependiendo del objetivo.
+Se fundamenta en:
 
-Visualización
-    ↓
-PC1–PC2
+$$
+VE_{\mathrm{cum}}(60)\approx99.05\%
+$$
 
-Exploración / clustering
-    ↓
-PC1–PC21
-o
-PC1–PC31
+La representación puede variar según el objetivo analítico:
 
-Modelado conservador
-    ↓
-PC1–PC41
+| Objetivo                     | Representación operacional posible |
+| ---------------------------- | ---------------------------------- |
+| Visualización                | PC1–PC2                            |
+| Exploración / clustering     | PC1–PC21 o PC1–PC31                |
+| Modelado conservador         | PC1–PC41                           |
+| Máxima conservación práctica | PC1–PC60                           |
 
-Máxima conservación práctica
-    ↓
-PC1–PC60
+Estas alternativas constituyen decisiones de diseño analítico y no resultados independientes de la validación.
 
-Para modelos predictivos futuros, la cantidad óptima de componentes debe evaluarse mediante validación cruzada.
+Para futuros modelos predictivos, el número óptimo de componentes deberá determinarse mediante un procedimiento de validación apropiado, por ejemplo validación cruzada, atendiendo al objetivo específico del modelo.
 
-16. Arquitectura de procedencia
+---
 
+# 16. Arquitectura de procedencia
+
+La procedencia completa puede representarse como:
+
+```mermaid
 flowchart TD
-    A[R pipeline original]
 
-    A --> B[Embeddings T1]
-    A --> C[Embeddings T2]
-    A --> D[Embeddings T3]
-    A --> E[Prototipos semánticos]
-    A --> F[PCA R completa]
+    A["Pipeline R original"]
 
-    B --> G[Reconstrucción emb_all]
+    A --> B["Embeddings T1"]
+    A --> C["Embeddings T2"]
+    A --> D["Embeddings T3"]
+    A --> E["Prototipos semánticos"]
+    A --> F["PCA R completa"]
+
+    B --> G["Reconstrucción de emb_all"]
     C --> G
     D --> G
 
-    F --> H[Center / Scale R]
+    F --> H["Center / Scale de R"]
 
-    G --> I[Pipeline de validación Python]
+    G --> I["Reconstrucción Python"]
     H --> I
 
-    I --> J[PC1-PC94]
-    I --> K[PC95-PC120]
+    I --> J["PC1–PC94<br/>Rango identificable"]
+    I --> K["PC95–PC120<br/>Numéricamente nulos"]
 
-    J --> L[Equivalencia numérica]
-    K --> M[Componentes numéricamente nulos]
+    J --> L["Validación componente a componente"]
+    K --> M["No se exige identidad vectorial individual"]
 
-    J --> N[PCA operacional]
-    N --> O[PC1-PC60]
+    J --> N["Selección operacional"]
+    N --> O["PC1–PC60"]
+    O --> P["99.047407% de varianza"]
 
-    O --> P[99.047407% varianza]
+    classDef source fill:#0f172a,stroke:#60a5fa,color:#e0f2fe,stroke-width:2px;
+    classDef process fill:#172554,stroke:#38bdf8,color:#dbeafe,stroke-width:2px;
+    classDef valid fill:#052e16,stroke:#4ade80,color:#dcfce7,stroke-width:2px;
+    classDef null fill:#422006,stroke:#f59e0b,color:#fef3c7,stroke-width:2px;
 
-17. Flujo matemático
+    class A,B,C,D,E,F,H source;
+    class G,I,N,O process;
+    class J,L,P valid;
+    class K,M null;
+```
 
+---
+
+# 17. Flujo matemático de la migración
+
+```mermaid
 flowchart LR
 
     A["Embeddings<br/>120 × 384"]
-    --> B["Center / Scale"]
-    --> C["Z<br/>120 × 384"]
-    --> D["SVD<br/>Z = UΣVᵀ"]
-    --> E["Loadings<br/>V"]
-    --> F["Scores<br/>ZV"]
-    --> G["Varianza explicada"]
-    --> H["Selección operacional"]
+    --> B["Center / Scale<br/>parámetros de R"]
 
-18. Frontera del rango
+    B --> C["Z<br/>120 × 384"]
 
+    C --> D["SVD<br/>Z = UΣVᵀ"]
+
+    D --> E["Loadings<br/>V"]
+    D --> F["Scores<br/>ZV"]
+    D --> G["Sdev"]
+
+    G --> H["Varianza explicada"]
+    H --> I["Selección operacional"]
+
+    I --> J["PC1–PC60<br/>99.047407%"]
+
+    classDef input fill:#0f172a,stroke:#60a5fa,color:#e0f2fe,stroke-width:2px;
+    classDef process fill:#172554,stroke:#38bdf8,color:#dbeafe,stroke-width:2px;
+    classDef output fill:#052e16,stroke:#4ade80,color:#dcfce7,stroke-width:2px;
+
+    class A input;
+    class B,C,D,E,F,G,H,I process;
+    class J output;
+```
+
+---
+
+# 18. Frontera del rango numérico
+
+```mermaid
 flowchart LR
 
-    A[PC1]
-    --> B["..."]
-    --> C[PC94]
-    --> D["Rango numérico = 94"]
-    --> E[PC95]
-    --> F["..."]
-    --> G[PC120]
-    --> H["Varianza numéricamente nula"]
+    A["PC1"] --> B["…"] --> C["PC94"]
+    C --> D["Rango numéricamente identificable = 94"]
+    D --> E["PC95"]
+    E --> F["…"]
+    F --> G["PC120"]
+    G --> H["Componentes numéricamente nulas"]
 
-19. Selección operacional
+    classDef valid fill:#052e16,stroke:#4ade80,color:#dcfce7,stroke-width:2px;
+    classDef boundary fill:#422006,stroke:#f59e0b,color:#fef3c7,stroke-width:2px;
 
+    class A,B,C,D valid;
+    class E,F,G,H boundary;
+```
+
+---
+
+# 19. Selección operacional
+
+```mermaid
 flowchart TD
 
-    A[PCA completa]
+    A["PCA completa"]
 
-    A --> B[PC1-PC94]
+    A --> B["PC1–PC94<br/>rango numéricamente identificable"]
 
-    B --> C{Objetivo}
+    B --> C{"Objetivo analítico"}
 
-    C --> D["Visualización<br/>PC1-PC2"]
-    C --> E["Exploración<br/>PC1-PC21 / PC31"]
-    C --> F["Modelado conservador<br/>PC1-PC41"]
-    C --> G["Máxima conservación práctica<br/>PC1-PC60"]
+    C --> D["Visualización<br/>PC1–PC2"]
+    C --> E["Exploración / clustering<br/>PC1–PC21 / PC31"]
+    C --> F["Modelado conservador<br/>PC1–PC41"]
+    C --> G["Máxima conservación práctica<br/>PC1–PC60"]
 
-    G --> H["99.047407% varianza"]
+    G --> H["99.047407%<br/>varianza acumulada"]
 
-20. Artefactos generados
+    classDef source fill:#0f172a,stroke:#60a5fa,color:#e0f2fe,stroke-width:2px;
+    classDef decision fill:#422006,stroke:#f59e0b,color:#fef3c7,stroke-width:2px;
+    classDef output fill:#052e16,stroke:#4ade80,color:#dcfce7,stroke-width:2px;
 
-La PCA operacional Python se encuentra en:
+    class A,B source;
+    class C,D,E,F,G decision;
+    class H output;
+```
 
+---
+
+# 20. Artefactos de la PCA operacional
+
+La PCA operacional de Python se encuentra en:
+
+```text
 data/processed/embeddings/python/pca/
+```
 
-Archivos:
+Los archivos son:
 
+```text
 pca_embeddings_pc60_scores.csv
 pca_embeddings_pc60_loadings.csv
 pca_embeddings_pc60_sdev.csv
@@ -504,104 +857,162 @@ pca_embeddings_pc60_center.csv
 pca_embeddings_pc60_scale.csv
 pca_embeddings_pc60_variance.csv
 metadata.json
+```
 
-El archivo metadata.json registra:
+El archivo `metadata.json` registra, como mínimo:
 
-origen R;
-matriz utilizada;
-dimensiones;
-algoritmo;
-alineación de signos;
-rango;
-componentes informativos;
-componentes nulos;
-número de componentes operacionales;
-varianza acumulada;
-preservación del PCA original.
-21. Scripts de validación
-Construcción de PCA operacional
+```text
+origen R
+matriz utilizada
+dimensiones
+algoritmo
+alineación de signos
+rango numérico
+componentes numéricamente identificables
+componentes numéricamente nulas
+número de componentes operacionales
+varianza acumulada
+preservación del PCA original
+```
+
+Estos archivos se consideran derivados operacionales de la solución original.
+
+---
+
+# 21. Scripts de construcción y validación
+
+## Construcción de la PCA operacional
+
+```text
 scripts/validation/build_operational_pca.py
-Validación R → Python
+```
+
+## Validación R → Python
+
+```text
 scripts/validation/validate_r_python_embeddings.py
+```
 
-La validación debe ejecutarse desde la raíz:
+La validación puede ejecutarse desde la raíz del repositorio mediante:
 
+```bash
 python scripts/validation/validate_r_python_embeddings.py
-22. Criterios de aceptación
+```
 
-La migración se considera validada cuando se cumplen simultáneamente:
+Los scripts de construcción y validación forman parte de la trazabilidad técnica de la migración.
 
-[PASS] dimensiones de embeddings
-[PASS] checksums
-[PASS] prototipos
-[PASS] reconstrucción de emb_all
-[PASS] center / scale
-[PASS] rango numérico
-[PASS] explained variance
-[PASS] sdev
-[PASS] loadings PC1–PC94
-[PASS] scores PC1–PC94
-[PASS] clasificación PC95–PC120
+---
+
+# 22. Criterios de aceptación
+
+La migración se considera validada cuando se cumplen simultáneamente los siguientes criterios:
+
+```text
+[PASS] Dimensiones de embeddings
+[PASS] Integridad mediante SHA-256
+[PASS] Prototipos semánticos
+[PASS] Reconstrucción de emb_all
+[PASS] Parámetros center / scale
+[PASS] Rango numérico
+[PASS] Varianza explicada
+[PASS] SDEV
+[PASS] Loadings PC1–PC94
+[PASS] Scores PC1–PC94
+[PASS] Clasificación PC95–PC120
 [PASS] PCA operacional PC1–PC60
-[PASS] preservación PCA R original
-23. Tolerancias
+[PASS] Preservación de la PCA original de R
+```
 
-Las comparaciones utilizan tolerancias numéricas debido a la representación de números reales en punto flotante.
+La condición global de aceptación es:
 
-Resultados observados:
+```text
+PASS — equivalencia R → Python validada
+```
 
-ElementoDiferencia máxima
-Explained variance1.665e-16
-SDEV8.882e-15
-Loadings PC1–PC945.185e-14
-Scores PC1–PC945.241e-13
+dentro del rango numéricamente identificable y de las tolerancias documentadas.
 
-Estas magnitudes son muy inferiores a niveles que indicarían una diferencia metodológica.
+---
 
-El checksum T2 utiliza una tolerancia de:
+# 23. Tolerancias numéricas
 
+Las comparaciones entre R y Python utilizan tolerancias debido a la representación finita de los números reales y a diferencias de punto flotante entre implementaciones.
+
+Los valores máximos observados fueron:
+
+| Elemento           | Diferencia máxima |
+| ------------------ | ----------------: |
+| Varianza explicada |       `1.665e-16` |
+| SDEV               |       `8.882e-15` |
+| Loadings PC1–PC94  |       `5.185e-14` |
+| Scores PC1–PC94    |       `5.241e-13` |
+
+Estas magnitudes son compatibles con variaciones de precisión de punto flotante.
+
+### Comparación numérica de T2
+
+La comprobación correspondiente a T2 utiliza una tolerancia de:
+
+```text
 1e-7
+```
 
-porque el valor de referencia R utilizado en la auditoría estaba redondeado:
+porque el valor de referencia almacenado en R estaba redondeado:
 
+```text
 Python = 0.670081264633
-R       = 0.6700813
+R      = 0.6700813
+```
 
-La diferencia observada es aproximadamente:
+La diferencia observada fue aproximadamente:
 
-$$ 3.54\times10^{-8} $$
+$$
+3.54\times10^{-8}
+$$
 
-y corresponde al redondeo del valor de referencia.
+y se encuentra dentro de la tolerancia definida.
 
-24. Limitaciones
+Esta comprobación debe interpretarse como una **comparación numérica tolerante**, no como una comparación de hash criptográfico.
 
-Esta validación demuestra equivalencia numérica de la etapa de embeddings/PCA.
+---
+
+# 24. Limitaciones
+
+La presente validación demuestra equivalencia numérica de la etapa de embeddings y PCA bajo la configuración documentada.
 
 No demuestra por sí misma:
 
-validez clínica;
-validez predictiva;
-generalización fuera de la muestra;
-optimalidad universal de PC1–PC60;
-equivalencia de módulos NLP todavía no auditados;
-equivalencia de modelos posteriores que utilicen los embeddings.
+* validez clínica;
+* validez predictiva;
+* generalización fuera de la muestra utilizada;
+* optimalidad universal de PC1–PC60;
+* equivalencia de módulos NLP distintos de embeddings/PCA;
+* equivalencia de modelos estadísticos posteriores que utilicen las representaciones derivadas.
 
-La equivalencia aquí demostrada es específicamente:
+La equivalencia demostrada es específicamente:
 
-R embeddings / PCA
+```text
+Embeddings / PCA en R
         ↓
-Python embeddings / PCA
+Embeddings / PCA en Python
+```
 
-dentro del rango numéricamente identificable.
+dentro del rango numéricamente identificable:
 
-25. Decisión metodológica final
+```text
+PC1–PC94
+```
 
-Se establece como regla de la migración:
+---
 
-Los artefactos originales de R se conservan sin modificación. Python reproduce el procedimiento y genera artefactos derivados. La equivalencia se evalúa componente por componente únicamente dentro del rango numéricamente identificable.
+# 25. Regla metodológica de la migración
+
+La migración adopta la siguiente regla:
+
+> Los artefactos originales de R se conservan sin modificación. La implementación Python constituye una reconstrucción y derivación operacional. La equivalencia se evalúa componente por componente dentro del rango numéricamente identificable y mediante tolerancias previamente definidas.
 
 En consecuencia:
 
+```text
 PCA R completa
       │
       ├── preservada
@@ -615,8 +1026,14 @@ PCA R completa
 PCA Python operacional
       │
       └── PC1–PC60
-             └── 99.047407% varianza
-26. Resultado final de auditoría
+             └── 99.047407% de varianza acumulada
+```
+
+---
+
+# 26. Resultado final de la validación
+
+```text
 ======================================================================
 VALIDACIÓN R → PYTHON
 ======================================================================
@@ -625,28 +1042,35 @@ PASS — equivalencia R → Python validada para PC1–PC94.
 
 PASS — PCA operacional PC1–PC60 validada.
 
-INFO — PC95–PC120 clasificados como componentes
-       numéricamente nulos.
+INFO — PC95–PC120 clasificadas como componentes
+       numéricamente nulas.
 
-INFO — PCA R original preservada como fuente de verdad.
+INFO — PCA original de R preservada como fuente de referencia.
+
+INFO — Tolerancias numéricas documentadas y satisfechas.
 
 Fecha de auditoría: 2026-09-07
 Estado: PASS
 ======================================================================
-27. Cierre de la etapa
+```
 
-La etapa de migración de embeddings y PCA queda formalmente cerrada.
+---
+
+# 27. Cierre de la etapa
+
+La etapa de migración de embeddings y PCA queda formalmente cerrada bajo los criterios establecidos en este documento.
 
 La infraestructura resultante proporciona:
 
-proveniencia, porque se preservan los artefactos originales;
-reproducibilidad, porque la reconstrucción Python está automatizada;
-equivalencia numérica, porque PC1–PC94 coinciden dentro de tolerancias;
-control de degeneración numérica, porque PC95–PC120 se identifican como nulos;
-representación operacional, mediante PC1–PC60;
-trazabilidad, mediante metadata.json y los scripts de validación;
-auditabilidad, mediante checksums, dimensiones, tolerancias y resultados registrados.
+* **proveniencia**, mediante la conservación de los artefactos originales;
+* **reproducibilidad**, mediante scripts automatizados de reconstrucción y validación;
+* **equivalencia numérica**, mediante la comparación de PC1–PC94 dentro de tolerancias explícitas;
+* **control de degeneración numérica**, mediante la identificación de PC95–PC120 como componentes numéricamente nulas;
+* **representación operacional**, mediante PC1–PC60;
+* **trazabilidad**, mediante `metadata.json` y los scripts correspondientes;
+* **integridad**, mediante SHA-256 y conservación de los RDS originales;
+* **auditabilidad técnica**, mediante registro de dimensiones, fórmulas, tolerancias y resultados.
 
-Estado final: PASS
+**Estado final: PASS**
 
-Fecha: 2026-09-07
+**Fecha:** 2026-09-07

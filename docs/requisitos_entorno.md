@@ -1,10 +1,10 @@
-## Requisitos del entorno R + Python
+## Requisitos del entorno R y Python
 
-El pipeline de `experimento-nlp` utiliza una arquitectura híbrida en la que **R constituye el entorno principal de análisis estadístico y procesamiento**, mientras que **Python se utiliza específicamente para la generación de embeddings mediante Sentence Transformers**.
+El pipeline de `experimento-nlp` se implementa mediante una arquitectura híbrida en la que **R constituye el entorno principal para el procesamiento y análisis estadístico**, mientras que **Python se emplea de manera especializada para la generación de embeddings mediante Sentence Transformers**.
 
-La interacción entre ambos entornos se realiza mediante `reticulate`.
+La interoperabilidad entre ambos entornos se establece mediante `reticulate`. Esta arquitectura permite mantener separadas las responsabilidades computacionales y, al mismo tiempo, integrar los resultados del componente de representación semántica en el flujo analítico principal.
 
-La separación de responsabilidades es:
+La distribución funcional de los componentes es la siguiente:
 
 ```text
                     PIPELINE EXPERIMENTO-NLP
@@ -14,10 +14,10 @@ La separación de responsabilidades es:
                 ▼                           ▼
           ENTORNO R                    ENTORNO PYTHON
                 │                           │
-        Análisis principal            Embeddings
-        Modelos LMM                   Sentence Transformers
-        Visualizaciones               PyTorch
-        Tablas                        NumPy
+        Análisis estadístico            Embeddings
+        Modelos lineales mixtos         Sentence Transformers
+        Visualizaciones                 PyTorch
+        Tablas                          NumPy
         Sensibilidad
                 │                           │
                 └──────────┬────────────────┘
@@ -30,43 +30,43 @@ La separación de responsabilidades es:
 
 ### 1. Entorno R
 
-El entorno R contiene prácticamente todo el pipeline analítico:
+R constituye el entorno analítico principal del proyecto y concentra las etapas centrales del pipeline:
 
 ```text
-Importación
+Importación de datos
 Procesamiento textual
-Sentimiento y emociones
-Diccionarios Hopper
-Procesamiento de variables
+Análisis de sentimiento y emociones
+Aplicación de diccionarios Hopper
+Transformación y derivación de variables
 Modelos lineales mixtos
 Inferencia estadística
-EMMs y contrastes
+Medias marginales estimadas (EMMs) y contrastes
 Análisis de sensibilidad
 Visualización
 Exportación de resultados
 ```
 
-La reproducibilidad de este entorno se gestiona mediante:
+La gestión de las dependencias de este entorno se realiza mediante:
 
 ```text
 renv.lock
 ```
 
-El archivo `renv.lock` constituye la referencia para las dependencias R y sus versiones utilizadas por el proyecto.
+El archivo `renv.lock` constituye el registro de referencia de los paquetes R y de las versiones utilizadas por el proyecto, y permite reconstruir el entorno analítico dentro de las condiciones de compatibilidad establecidas.
 
-Entre las dependencias estructurales del pipeline se encuentra:
+Entre las dependencias estructurales se encuentra:
 
 ```text
 reticulate
 ```
 
-`reticulate` no es una dependencia de Python. Es un paquete de R que proporciona la interfaz entre R y el entorno Python.
+`reticulate` es un paquete de R que proporciona la interfaz de interoperabilidad con Python. Por tanto, forma parte de las dependencias del entorno R y **no constituye una dependencia del entorno Python**.
 
 ---
 
 ### 2. Entorno Python
 
-El entorno Python se utiliza específicamente para el componente de embeddings.
+Python se utiliza exclusivamente en el componente destinado a la generación de embeddings.
 
 La dependencia funcional principal es:
 
@@ -74,21 +74,21 @@ La dependencia funcional principal es:
 sentence-transformers
 ```
 
-que proporciona la interfaz `SentenceTransformer` utilizada para cargar el modelo y generar las representaciones vectoriales.
+Esta biblioteca proporciona la interfaz `SentenceTransformer`, empleada para cargar el modelo preentrenado y generar las representaciones vectoriales utilizadas posteriormente por el pipeline.
 
-El backend de cálculo es:
+El backend computacional es:
 
 ```text
 torch
 ```
 
-y el manejo de matrices y arrays numéricos se realiza mediante:
+mientras que el manejo de matrices y estructuras numéricas se realiza mediante:
 
 ```text
 numpy
 ```
 
-La estructura mínima del entorno es:
+La estructura mínima del entorno Python puede representarse como:
 
 ```text
 Python
@@ -97,23 +97,23 @@ Python
  └── numpy
 ```
 
-Las dependencias transitivas adicionales son instaladas por el gestor de paquetes a partir de las restricciones de estas librerías y **no necesitan enumerarse manualmente** en el `requirements.txt` salvo que el proyecto utilice alguna de ellas directamente.
+Las dependencias transitivas adicionales son resueltas por el sistema de instalación a partir de las restricciones definidas por estas bibliotecas. Por esta razón, dichas dependencias no requieren una enumeración manual en `requirements.txt`, salvo cuando alguna de ellas sea utilizada directamente por el código del proyecto.
 
-La documentación actual de Sentence Transformers recomienda Python 3.10 o superior y PyTorch 2.2 o superior.
+La especificación propuesta considera Python 3.10 o superior y una versión de PyTorch compatible con la versión seleccionada de Sentence Transformers. La compatibilidad efectiva debe validarse en el entorno de ejecución que se adopte para la versión reproducible del pipeline.
 
 ---
 
 ### 3. Modelo de embeddings
 
-El modelo utilizado por el pipeline es:
+El modelo de representación semántica utilizado por el pipeline es:
 
 ```text
 paraphrase-multilingual-MiniLM-L12-v2
 ```
 
-Este nombre identifica el **modelo preentrenado**, no un paquete que deba agregarse al `requirements.txt`.
+Este identificador corresponde al **modelo preentrenado** utilizado para generar los embeddings y no debe interpretarse como una dependencia instalable de Python. En consecuencia, no debe incorporarse como una entrada independiente en `requirements.txt`.
 
-Conceptualmente:
+La relación funcional puede resumirse de la siguiente manera:
 
 ```text
 requirements.txt
@@ -132,15 +132,15 @@ paraphrase-multilingual-MiniLM-L12-v2
        Embeddings de 384 dimensiones
 ```
 
-El modelo se obtiene durante la ejecución cuando `SentenceTransformer()` lo carga desde el repositorio correspondiente.
+Durante la ejecución, `SentenceTransformer()` carga el modelo desde el repositorio correspondiente y lo utiliza para producir representaciones vectoriales de 384 dimensiones.
 
 ---
 
 ### 4. Archivo `requirements.txt`
 
-Para el entorno Python del proyecto se propone mantener un `requirements.txt` separado del `renv.lock`.
+Las dependencias Python se mantienen en un archivo independiente de `renv.lock`, con el propósito de conservar una separación explícita entre ambos entornos de ejecución.
 
-Una especificación mínima actual sería:
+La especificación mínima propuesta es:
 
 ```text
 # ============================================================================
@@ -157,17 +157,19 @@ torch==2.14.0
 numpy
 ```
 
-Sentence Transformers 6.0.1 requiere Python >=3.10 y documenta compatibilidad con PyTorch moderno; PyPI registra PyTorch 2.14.0 como versión actual y ofrece wheels para Python 3.10–3.14.
+En esta especificación, `sentence-transformers` y `torch` se fijan explícitamente, mientras que `numpy` permanece sin una restricción de versión en esta etapa inicial.
 
-> **Nota de reproducibilidad:** `numpy` se deja sin una versión fija en esta especificación inicial porque la compatibilidad concreta debe resolverse conjuntamente con la versión de Python, PyTorch, Sentence Transformers y el entorno utilizado por `reticulate`. Para congelar completamente el entorno Python, se recomienda posteriormente generar un `requirements.txt` derivado del entorno realmente validado.
+Esta decisión responde a la necesidad de resolver la compatibilidad de `numpy` conjuntamente con la versión de Python, PyTorch, Sentence Transformers y el mecanismo de interoperabilidad utilizado por `reticulate`.
+
+Por consiguiente, el archivo anterior debe considerarse una **especificación inicial del entorno Python** y no necesariamente el manifiesto definitivo de reproducibilidad. Para una congelación completa del entorno, se recomienda generar la especificación final a partir de la instalación efectivamente utilizada y validada por el proyecto.
 
 ---
 
 ### 5. Compatibilidad R ↔ Python
 
-El pipeline no trata R y Python como dos análisis independientes. Python funciona como una dependencia especializada invocada desde R.
+R y Python no constituyen dos pipelines analíticos independientes. Python funciona como un componente especializado que es invocado desde el entorno R y cuyos resultados se reincorporan al flujo analítico principal.
 
-El recorrido funcional es:
+La secuencia funcional es:
 
 ```mermaid
 flowchart LR
@@ -191,9 +193,9 @@ flowchart LR
     class E,F model;
 ```
 
-Esto implica que un entorno Python correctamente instalado no sustituye al entorno R, y viceversa.
+En consecuencia, la disponibilidad de un entorno Python funcional no sustituye al entorno R, y la disponibilidad del entorno R no elimina la necesidad del componente Python.
 
-Para ejecutar el pipeline completo se necesitan ambos:
+La ejecución completa del pipeline requiere, como mínimo:
 
 ```text
 renv.lock
@@ -211,15 +213,15 @@ modelo de embeddings
 
 ### 6. Gestión del entorno Python mediante `reticulate`
 
-Las versiones actuales de `reticulate` permiten declarar las dependencias Python directamente desde R mediante `py_require()`, dejando que `reticulate` resuelva un entorno Python compatible. Esta es la estrategia recomendada actualmente por la documentación de `reticulate` frente a depender necesariamente de una instalación Python seleccionada manualmente.
+Las versiones actuales de `reticulate` permiten declarar las dependencias Python directamente desde R mediante `py_require()`, de modo que el propio paquete pueda resolver un entorno Python compatible con los requisitos declarados.
 
-Para un proyecto reproducible, existen dos estrategias posibles:
+En un proyecto orientado a la reproducibilidad se contemplan dos estrategias de gestión:
 
 ```text
 Estrategia A
 renv + requirements.txt
         ↓
-entorno Python explícitamente gestionado
+entorno Python gestionado explícitamente
 
 Estrategia B
 renv + py_require()
@@ -227,15 +229,22 @@ renv + py_require()
 entorno Python gestionado por reticulate
 ```
 
-La elección entre ambas debe mantenerse consistente dentro del proyecto. No conviene documentar simultáneamente dos mecanismos como si fueran el mismo sistema de gestión.
+Ambas estrategias son técnicamente diferenciables y deben documentarse de forma consistente. No resulta conveniente presentar simultáneamente dos mecanismos de gestión como si constituyeran un único sistema de resolución de dependencias.
 
-La documentación de `reticulate` señala además que, desde la versión 1.41, `py_require()` es la vía recomendada para declarar dependencias Python cuando se permite que `reticulate` gestione el entorno.
+La estrategia adoptada deberá especificar de manera explícita:
+
+1. qué herramienta declara las dependencias Python;
+2. qué herramienta crea o administra el entorno;
+3. qué versiones se consideran reproducibles;
+4. cómo se vincula dicho entorno con `reticulate`.
+
+La documentación de `reticulate` establece `py_require()` como la vía recomendada para declarar dependencias Python cuando se permite que `reticulate` gestione el entorno de ejecución.
 
 ---
 
 ### 7. Relación entre `renv.lock` y `requirements.txt`
 
-La arquitectura de dependencias queda definida de esta manera:
+La arquitectura de dependencias del proyecto se organiza mediante una separación explícita entre el entorno R y el entorno Python:
 
 ```mermaid
 flowchart TD
@@ -272,81 +281,85 @@ flowchart TD
     class F bridge;
 ```
 
-La división es deliberada:
+La función de cada elemento es:
 
-| Archivo                                 | Entorno | Función                      |
-| --------------------------------------- | ------- | ---------------------------- |
-| `renv.lock`                             | R       | Congelar dependencias R      |
-| `requirements.txt`                      | Python  | Declarar dependencias Python |
-| `reticulate`                            | R       | Conectar R con Python        |
-| `paraphrase-multilingual-MiniLM-L12-v2` | Modelo  | Generar embeddings           |
+| Archivo o componente                    | Entorno | Función                                                             |
+| --------------------------------------- | ------- | ------------------------------------------------------------------- |
+| `renv.lock`                             | R       | Registrar y reproducir las dependencias R                           |
+| `requirements.txt`                      | Python  | Declarar las dependencias del componente Python                     |
+| `reticulate`                            | R       | Proporcionar la interoperabilidad entre R y Python                  |
+| `paraphrase-multilingual-MiniLM-L12-v2` | Modelo  | Generar las representaciones vectoriales utilizadas por el pipeline |
+
+Esta división permite distinguir entre las dependencias propias del análisis estadístico, las requeridas por el procesamiento NLP, el mecanismo de interoperabilidad y el modelo preentrenado.
 
 ---
 
 ### 8. Reproducción del pipeline completo
 
-La reproducción debe realizarse en el siguiente orden conceptual:
+La reconstrucción del entorno y la ejecución del pipeline deben seguir una secuencia coherente de preparación, validación y análisis:
 
 ```text
-1. Restaurar entorno R
+1. Restaurar el entorno R
         ↓
-2. Preparar / seleccionar entorno Python
+2. Preparar o seleccionar el entorno Python
         ↓
-3. Instalar dependencias Python
+3. Instalar o resolver las dependencias Python
         ↓
-4. Verificar reticulate
+4. Verificar la integración mediante reticulate
         ↓
 5. Cargar sentence-transformers
         ↓
-6. Cargar modelo de embeddings
+6. Cargar el modelo de embeddings
         ↓
-7. Generar embeddings
+7. Generar los embeddings
         ↓
-8. Continuar procesamiento y análisis en R
+8. Reincorporar los embeddings al flujo analítico en R
         ↓
-9. Ajustar modelos
+9. Ajustar los modelos estadísticos
         ↓
 10. Generar tablas y figuras
 ```
 
-Cuando se utiliza `renv` con un entorno Python administrado mediante `requirements.txt`, la documentación de `renv` indica que el `renv.lock` y el `requirements.txt` deben conservarse conjuntamente para permitir la restauración del proyecto.
+Cuando se adopta una configuración en la que `renv` y un entorno Python administrado mediante `requirements.txt` participan conjuntamente en la reproducción, ambos archivos deben conservarse como parte de la especificación del proyecto.
+
+La reproducibilidad completa depende, además, de la disponibilidad de las versiones de Python, bibliotecas, modelo preentrenado y demás recursos externos requeridos por el pipeline.
 
 ---
 
 ### 9. CPU y GPU
 
-La especificación base debe permanecer independiente del hardware siempre que sea posible.
+La especificación base del proyecto debe mantenerse, en la medida de lo posible, independiente del hardware de ejecución.
 
-Para una instalación CPU, `torch` puede instalarse desde su distribución estándar.
+Para una instalación basada exclusivamente en CPU, `torch` puede instalarse mediante una distribución compatible con la plataforma utilizada.
 
-La utilización de GPU requiere una instalación de PyTorch compatible con la plataforma CUDA correspondiente. Por esta razón, **no se debe introducir una variante CUDA específica en el `requirements.txt` genérico** mientras el hardware objetivo no forme parte de la especificación reproducible del proyecto.
+La ejecución mediante GPU requiere una instalación de PyTorch compatible con la plataforma CUDA correspondiente. Por esta razón, una variante específica de CUDA no debe incorporarse al `requirements.txt` genérico mientras el hardware objetivo y la plataforma de aceleración no formen parte de la especificación reproducible del proyecto.
 
-La documentación de Sentence Transformers remite a la configuración específica de CUDA cuando se utiliza aceleración GPU.
+Cuando se utilice aceleración GPU, la configuración de CUDA deberá documentarse por separado junto con la plataforma, versión de PyTorch y demás componentes necesarios para garantizar la compatibilidad.
 
 ---
 
-### 10. Principio de dependencias del proyecto
+### 10. Principio de organización de las dependencias
 
-El principio que debe conservar esta estructura es:
+La arquitectura de dependencias del proyecto se fundamenta en los siguientes principios:
 
 ```text
-R es el entorno analítico principal
+R constituye el entorno analítico principal
         +
-Python es una dependencia especializada
+Python constituye una dependencia especializada
         +
-reticulate conecta ambos entornos
+reticulate proporciona la interoperabilidad
         +
-renv.lock controla R
+renv.lock gestiona el entorno R
         +
-requirements.txt controla Python
+requirements.txt declara el entorno Python
 ```
 
-De esta manera, el proyecto puede distinguir claramente entre:
+Esta organización permite distinguir de manera explícita entre:
 
 **dependencias del análisis estadístico**,
 **dependencias del procesamiento NLP**,
-**puente de interoperabilidad**,
+**mecanismo de interoperabilidad**,
 **modelo preentrenado**
-y **artefactos científicos producidos por el pipeline**.
+y **artefactos científicos generados por el pipeline**.
 
-> **Revisión pendiente:** antes de congelar definitivamente las versiones de Python, conviene que el `requirements.txt` final sea generado a partir del entorno Python efectivamente utilizado y validado para este proyecto. La versión de `sentence-transformers` y de PyTorch cambia con el tiempo; por ello, una especificación reproducible definitiva debe reflejar el entorno que haya sido probado, no simplemente las últimas versiones disponibles.
+> **Revisión pendiente:** antes de establecer la especificación definitiva del entorno Python, las versiones consignadas en `requirements.txt` deberán contrastarse con el entorno efectivamente utilizado y validado para este proyecto. La versión reproducible deberá corresponder a una configuración comprobada, incluyendo la versión de Python, las bibliotecas empleadas, la integración mediante `reticulate` y el modelo de embeddings utilizado.
