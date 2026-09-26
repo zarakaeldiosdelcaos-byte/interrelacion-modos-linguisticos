@@ -1,27 +1,45 @@
-# Informe de Reparación — Pipeline NLP (experimento-nlp-staging)
+# Informe de Reparación — Pipeline NLP
+
+![Informe de reparación del pipeline](assets/portada_reparacion_pipeline.jpg)
 
 **Fecha:** 2026-09-24  
-**Repositorio:** `C:/Users/saraq/Documents/experimento-nlp-staging`
+**Repositorio:** `experimento-nlp-staging`
 
 ---
 
 ## Resumen
 
-Se corrigieron los 7 defectos confirmados (D1–D7) y se implementaron los cambios estructurales requeridos para separar cohortes y calcular embeddings para ambas. Todos los archivos `.R` modificados pasan `parse()` sin error. No se ejecutó el pipeline completo (requiere datos y entorno Python).
+Se corrigieron los 7 defectos confirmados (D1–D7) y se implementaron los
+cambios estructurales requeridos para separar cohortes y calcular embeddings
+para ambas. Todos los archivos `.R` modificados pasan `parse()` sin error.
+
+La ejecución completa del pipeline no se realizó durante esta intervención,
+ya que requiere los datos del estudio y un entorno Python con
+`sentence-transformers`.
+
+Por tanto, las verificaciones documentadas distinguen entre **validación
+sintáctica y estructural del código** y **validación de ejecución
+end-to-end**, esta última aún pendiente.
 
 ---
 
 ## Archivos tocados y cambios
 
+![Auditoría y cambios del pipeline](assets/auditoria_cambios_pipeline.jpg)
+
 ### R/00_config.R
-- **Líneas ~93–155**: Reemplazada la ruta fija `venv_path <- "C:/venvs/renv311"` por una función `resolver_python()` que prueba en orden:
-  1. `NLP_PYTHON` (variable de entorno)
-  2. `C:/venvs/renv-nlp/Scripts/python.exe`
-  3. `C:/venvs/renv311/Scripts/python.exe`
-  4. `Sys.which("python")`
-- Cada candidato se verifica con `system(python -c "import sentence_transformers")`.
-- Si ninguno sirve, `stop()` con instrucciones exactas: `uv venv C:/venvs/renv-nlp && uv pip install sentence-transformers torch`.
-- **Líneas ~144–155**: Añadidas `RUTA_DATOS_CRUDOS`, `RUTA_PRINCIPAL_EXCEL`, `RUTA_PILOTO_EXCEL` configurables (default: `C:/Users/saraq/Downloads/Experimento Alfonso Lopez Corral`).
+
+- **Líneas ~93–155**: reemplazada la dependencia de una ruta fija de Python por
+  una función `resolver_python()` que prioriza:
+  1. `NLP_PYTHON` (variable de entorno),
+  2. entorno Python local del proyecto,
+  3. `Sys.which("python")`.
+- El intérprete se valida comprobando la disponibilidad de
+  `sentence_transformers`.
+- Si no se encuentra un intérprete compatible, el sistema detiene la ejecución
+  e indica cómo configurar el entorno.
+- Las rutas de datos se obtienen mediante variables configurables y no mediante
+  rutas personales del equipo de desarrollo.
 
 ### R/01_import_data.R
 - **Líneas ~35–134** (`importar_piloto`): Cambiado default a `hoja = "Datos_Largo"`. Lee `condicion` directamente de los datos (nunca deduce del número de participante). La hoja visual `Hoja1` se mantiene como fallback explícito con `warning()`.
