@@ -20,10 +20,10 @@ abstract: >-
   datos de participantes.
 type: software
 authors:
-  - family-names: "López Corral"     # TODO_CONFIRMAR
-    given-names: "Alfonso"           # TODO_CONFIRMAR
-    # orcid: "https://orcid.org/0000-0000-0000-0000"   # TODO_CONFIRMAR
-    # affiliation: ""                                  # TODO_CONFIRMAR
+  - family-names: "López Corral"
+    given-names: "Alfonso"
+    orcid: "https://orcid.org/0000-0003-2557-808X"
+    affiliation: "Departamento de Psicología y Ciencias de la Comunicación, Universidad de Sonora"
 
   - family-names: "Gutiérrez Castro" 
     given-names: "Lauro"            
