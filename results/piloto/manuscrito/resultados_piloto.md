@@ -2,7 +2,7 @@
 
 > **Nota de procedencia** (no forma parte del manuscrito). Todos los estadísticos provienen de la corrida
 > completa y verificada del pipeline (`Experimento ALC_v5_corregido.R`, v5.9, SHA-256 `1143b36a…`).
-> Tablas de origen, relativas a `Analisis agosto v2/`:
+> Las tablas de origen se identifican mediante rutas relativas al directorio de análisis `Analisis agosto v2/`:
 >
 > - `piloto/tablas/resumen_modelos_validos.csv` — ANOVA del modelo mixto
 > - `piloto/tablas/piloto_n_palabras_calculado_EMM.csv` — medias marginales
@@ -15,8 +15,6 @@
 > mismo estudio. No hay datos de `demora` y la columna `n_palabras` está vacía en el archivo de captura
 > (0 de 17), de modo que la variable dependiente es el conteo `n_palabras_calculado`.
 > Versión LaTeX compilable: `resultados_piloto.tex` (14 páginas, compila sin errores ni citas sin resolver).
-
----
 
 ## 1. Resultados
 
