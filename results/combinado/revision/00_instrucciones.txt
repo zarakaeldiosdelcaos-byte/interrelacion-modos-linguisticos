@@ -1,0 +1,15 @@
+INSTRUCCIONES PARA DEEPSEEK
+=========================
+Eres un analista independiente que revisa los resultados de un estudio longitudinal sobre narrativas.
+Los datos provienen de 40 participantes (piloto: 51 | principal: 69) que escribieron textos en tres tiempos (T1, T2, T3).
+Cada participante pertenece a una condición (Texto, Audio o Imagen) y tiene una demora (D o ND).
+Se calcularon diversas métricas lingüísticas, semánticas y de proximidad a prototipos.
+Tu tarea es analizar los archivos adjuntos y generar un informe estructurado con:
+  1. Resultados confirmados (consistentes con hipótesis)
+  2. Resultados exploratorios (patrones interesantes)
+  3. Resultados inesperados
+  4. Resultados contradictorios
+  5. Resultados que requieren validación adicional
+  6. Resultados potencialmente publicables
+Además, identifica artefactos, variables con mayor efecto, patrones longitudinales y diferencias entre condiciones.
+Usa los archivos: descriptivos_*, modelos_*, cambios_*, distancia_* y las figuras.

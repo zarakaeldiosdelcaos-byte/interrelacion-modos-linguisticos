@@ -1,0 +1,42 @@
+RESUMEN EJECUTIVO DE RESULTADOS
+================================
+
+Participantes: 40 
+Condiciones: Texto, Audio, Imagen 
+
+MÉTRICAS LINGÜÍSTICAS
+# A tibble: 6 × 10
+  variable      n   media    desv mediana     iqr ic95_inf ic95_sup    min   max
+  <chr>     <dbl>   <dbl>   <dbl>   <dbl>   <dbl>    <dbl>    <dbl>  <dbl> <dbl>
+1 n_palabr…    23  91.7    59.1    81      75.5     66.1    117.    28       227
+2 n_palabr…    23 139.     73.3   122     105      107.     171.    28       311
+3 n_palabr…    23 181.    102.    153     162.     137.     225.    42       401
+4 ttr_t1       40   0.841   0.104   0.844   0.158    0.808    0.875  0.624     1
+5 ttr_t2       40   0.825   0.089   0.83    0.129    0.796    0.853  0.627     1
+6 ttr_t3       40   0.811   0.099   0.83    0.111    0.779    0.842  0.561     1
+
+SIMILITUDES SEMÁNTICAS
+# A tibble: 3 × 8
+  comparacion       n media  desv mediana   iqr   min   max
+  <chr>         <dbl> <dbl> <dbl>   <dbl> <dbl> <dbl> <dbl>
+1 sim_sem_t1_t2    40 0.875 0.167   0.963 0.170 0.339     1
+2 sim_sem_t1_t3    40 0.839 0.184   0.898 0.208 0.301     1
+3 sim_sem_t2_t3    40 0.932 0.118   0.987 0.101 0.444     1
+
+CAMBIO DE PROTOTIPOS (TOP 5)
+# A tibble: 5 × 4
+  prototipo media_delta sd_delta mediana_delta
+  <chr>           <dbl>    <dbl>         <dbl>
+1 tristeza       0.025    0.0715        0.0162
+2 duda           0.0195   0.0595        0.0028
+3 esperanza      0.016    0.0621        0.0055
+4 soledad       -0.0143   0.0828        0.0005
+5 agencia        0.0135   0.0667        0.0028
+
+DISTANCIA EUCLIDIANA T1→T3
+# A tibble: 3 × 4
+  condicion media  desv mediana
+  <chr>     <dbl> <dbl>   <dbl>
+1 Audio      2.35  2.61    1.12
+2 Imagen     5.77  4.75    4.68
+3 Texto      3.33  3.27    2.78
